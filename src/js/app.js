@@ -68,6 +68,7 @@ document.addEventListener('submit', async (e) => {
         const orderId = await backend.save('orders', {
             ...Object.fromEntries(fd.entries()),
             total,
+            items: [...store.state.cart],
             status: 'Új rendelés',
             date: new Date().toISOString()
         });
@@ -87,6 +88,7 @@ document.addEventListener('submit', async (e) => {
             images: imgs,
             image: imgs[0] || "",
             salePrice: fd.get('salePrice') ? Number(fd.get('salePrice')) : null,
+            stock: Number(fd.get('stock')) || 0,
             description: fd.get('description')
         });
         await store.loadData();
@@ -122,6 +124,39 @@ document.addEventListener('submit', async (e) => {
         await backend.saveSettings(data);
         store.applySettings();
         window.showToast("Beállítások felhőbe mentve!");
+    }
+
+    if (e.target.id === 'sale-form') {
+        const fd = new FormData(e.target);
+        const ids = fd.get('ids').split(',');
+        const type = fd.get('type');
+        const value = Number(fd.get('value'));
+
+        const updates = [];
+        store.state.products.forEach(p => {
+            if (ids.includes(String(p.id))) {
+                let salePrice = 0;
+                if (type === 'percent') {
+                    salePrice = Math.floor(p.price * (1 - value / 100));
+                } else {
+                    salePrice = value;
+                }
+                if (salePrice < 0) salePrice = 0;
+
+                p.salePrice = salePrice;
+                updates.push(p);
+            }
+        });
+
+        // Save sequentially
+        for (const p of updates) {
+            await backend.save('products', p);
+        }
+
+        await store.loadData();
+        window.closeModal();
+        window.renderView(false);
+        window.showToast(`${updates.length} termék sikeresen akciózva!`);
     }
 });
 

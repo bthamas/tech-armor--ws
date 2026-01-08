@@ -139,9 +139,9 @@ export const views = {
                                     <i class="fa-solid fa-cart-plus"></i>
                                 </div>
                             </button>
-                            <button onclick="window.store.toggleWishlist('${p.id}')" class="w-full bg-white border-2 border-gray-100 text-gray-400 px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:border-red-100 hover:text-red-500 transition-all cursor-pointer flex items-center justify-center gap-2">
+                            <button data-wish-id="${p.id}" onclick="window.store.toggleWishlist('${p.id}')" class="w-full bg-white border-2 border-gray-100 text-gray-400 px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:border-red-100 hover:text-red-500 transition-all cursor-pointer flex items-center justify-center gap-2">
                                 <i class="${store.state.wishlist.includes(p.id) ? 'fa-solid text-red-500' : 'fa-regular'} fa-heart text-lg"></i>
-                                ${store.state.wishlist.includes(p.id) ? 'Eltávolítás a kedvencekből' : 'Hozzáadás a kedvencekhez'}
+                                <span class="wish-text">${store.state.wishlist.includes(p.id) ? 'Eltávolítás a kedvencekből' : 'Hozzáadás a kedvencekhez'}</span>
                             </button>
                         </div>
 
@@ -389,6 +389,7 @@ window.openProductForm = (p = null) => {
             <div class="grid grid-cols-2 gap-6 text-left">
                 <div class="text-left"><label class="text-[10px] font-black uppercase text-gray-400 mb-3 block tracking-widest text-left">Alapár</label><input required type="number" name="price" value="${p?.price || ''}" class="w-full bg-surface-50 border-none rounded-2xl px-6 py-4 text-sm outline-none text-gray-900 font-bold text-left"></div>
                 <div class="text-left"><label class="text-[10px] font-black uppercase text-gray-400 mb-3 block tracking-widest text-left">Akciós ár</label><input type="number" name="salePrice" value="${p?.salePrice || ''}" class="w-full bg-surface-50 border-none rounded-2xl px-6 py-4 text-sm outline-none text-gray-900 font-bold text-left"></div>
+                <div class="text-left"><label class="text-[10px] font-black uppercase text-gray-400 mb-3 block tracking-widest text-left">Készlet (db)</label><input type="number" name="stock" value="${p?.stock || 0}" class="w-full bg-surface-50 border-none rounded-2xl px-6 py-4 text-sm outline-none text-gray-900 font-bold text-left"></div>
             </div>
             <div class="text-left"><label class="text-[10px] font-black uppercase text-gray-400 mb-3 block tracking-widest text-left">Kategória</label><select name="category" class="w-full bg-surface-50 border-none rounded-2xl px-6 py-4 text-sm outline-none text-gray-900 font-black text-left shadow-inner"><option ${p?.category === 'Fóliák' ? 'selected' : ''}>Fóliák</option><option ${p?.category === 'Tokok' ? 'selected' : ''}>Tokok</option><option ${p?.category === 'Kamera védők' ? 'selected' : ''}>Kamera védők</option></select></div>
             
@@ -469,7 +470,26 @@ window.openOrderEditForm = (o) => {
         <div class="flex justify-between items-center mb-8 text-left"><h3 class="text-2xl font-black text-gray-900 uppercase tracking-tighter text-left">Rendelés Módosítása</h3><button onclick="window.closeModal()" class="text-gray-300 hover:text-black transition-colors cursor-pointer text-left"><i class="fa-solid fa-times text-2xl text-left"></i></button></div>
         <form id="order-edit-form" class="space-y-6 text-left">
             <input type="hidden" name="id" value="${o.id}">
-            <div class="bg-brand-50 p-6 rounded-3xl border border-brand-100 mb-8 text-left"><div class="text-[10px] font-black uppercase text-brand-500 mb-2 tracking-widest text-left">Fizetendő összeg</div><div class="text-3xl font-black text-gray-900 text-left">${o.total.toLocaleString()} Ft</div></div>
+            
+            <!-- Items List -->
+            <div class="bg-gray-50 rounded-2xl p-4 border border-gray-100 max-h-40 overflow-y-auto custom-scrollbar mb-4">
+                <h4 class="text-[10px] font-black uppercase text-gray-400 mb-3 tracking-widest text-left">Rendelt Termékek</h4>
+                ${o.items && o.items.length ? o.items.map(i => `
+                    <div class="flex justify-between items-center mb-2 last:mb-0 p-2 bg-white rounded-xl border border-gray-100">
+                        <div class="flex items-center gap-3">
+                            <span class="font-bold text-gray-900 text-xs">${i.qty}x</span>
+                            <span class="text-xs font-bold text-gray-700 truncate max-w-[150px]">${i.name}</span>
+                        </div>
+                        <span class="text-xs font-black text-gray-900">${(i.price * i.qty).toLocaleString()} Ft</span>
+                    </div>
+                `).join('') : '<p class="text-xs text-gray-400">Nincs termék rögzítve.</p>'}
+            </div>
+
+            <div class="bg-brand-50 p-6 rounded-3xl border border-brand-100 mb-8 text-left">
+                <div class="text-[10px] font-black uppercase text-brand-500 mb-2 tracking-widest text-left">Fizetendő összeg</div>
+                <div class="text-3xl font-black text-gray-900 text-left">${o.total.toLocaleString()} Ft</div>
+            </div>
+            
             <div class="text-left"><label class="text-[10px] font-black uppercase text-gray-400 mb-3 block tracking-widest text-left">Vásárló Neve</label><input required name="name" value="${o.name}" class="w-full bg-surface-50 border-none rounded-2xl px-6 py-4 text-sm outline-none focus:ring-2 focus:ring-brand-500/20 text-gray-900 font-bold shadow-inner text-left"></div>
             <div class="text-left"><label class="text-[10px] font-black uppercase text-gray-400 mb-3 block tracking-widest text-left text-left">Cím</label><textarea required name="address" rows="2" class="w-full bg-surface-50 border-none rounded-2xl px-6 py-4 text-sm outline-none focus:ring-2 focus:ring-brand-500/20 text-gray-900 font-bold shadow-inner text-left">${o.address}</textarea></div>
             <div class="text-left"><label class="text-[10px] font-black uppercase text-gray-400 mb-3 block tracking-widest text-left text-left text-left">Státusz</label><select name="status" class="w-full bg-surface-50 border-none rounded-2xl px-6 py-4 text-sm outline-none text-gray-900 font-black text-left shadow-inner"><option value="Új rendelés" ${o.status === 'Új rendelés' ? 'selected' : ''}>Új rendelés</option><option value="Feldolgozás alatt" ${o.status === 'Feldolgozás alatt' ? 'selected' : ''}>Feldolgozás alatt</option><option value="Kiszállítás alatt" ${o.status === 'Kiszállítás alatt' ? 'selected' : ''}>Kiszállítás alatt</option><option value="Kiszállítva" ${o.status === 'Kiszállítva' ? 'selected' : ''}>Kiszállítva</option></select></div>

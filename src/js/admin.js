@@ -247,7 +247,7 @@ export const adminViews = {
                         </thead>
                         <tbody class="divide-y divide-gray-50">
                             ${products.map(p => {
-            const stock = Math.floor(Math.random() * 50); // Mock stock
+            const stock = p.stock !== undefined ? p.stock : 0;
             return `
                                 <tr class="hover:bg-surface-50 transition-colors group">
                                     <td class="p-4">
@@ -685,18 +685,28 @@ window.bulkAction = async (action) => {
             adminViews.products(); // Re-render
         }
     } else if (action === 'sale') {
-        // Mock sale
-        store.state.products.forEach(p => {
-            if (checked.includes(p.id)) {
-                p.salePrice = Math.floor(p.price * 0.9); // 10% off
-                p.saleStartDate = new Date().toISOString().split('T')[0];
-            }
-        });
-        window.showToast(`${checked.length} termék akciózva (-10%).`);
-        adminViews.products();
+        window.openSaleSettingsModal(checked);
     }
     // In a real app we would call backend API here
 };
+
+window.openSaleSettingsModal = (ids) => {
+    const html = `
+        <div class="flex justify-between items-center mb-8 text-left"><h3 class="text-2xl font-black text-gray-900 uppercase tracking-tighter text-left">Akció Beállítása</h3><button onclick="window.closeModal()" class="text-gray-300 hover:text-black transition-colors cursor-pointer text-left"><i class="fa-solid fa-times text-2xl text-left"></i></button></div>
+        <form id="sale-form" class="space-y-6 text-left">
+            <input type="hidden" name="ids" value="${ids.join(',')}">
+            <div class="text-left"><label class="text-[10px] font-black uppercase text-gray-400 mb-3 block tracking-widest text-left">Kedvezmény Típusa</label>
+            <select name="type" class="w-full bg-surface-50 border-none rounded-2xl px-6 py-4 text-sm outline-none text-gray-900 font-black text-left shadow-inner">
+                <option value="percent">Százalékos (%)</option>
+                <option value="fixed">Fix Ár (Ft)</option>
+            </select></div>
+            <div class="text-left"><label class="text-[10px] font-black uppercase text-gray-400 mb-3 block tracking-widest text-left">Érték</label><input required type="number" name="value" placeholder="pl. 10 vagy 4990" class="w-full bg-surface-50 border-none rounded-2xl px-6 py-4 text-sm outline-none font-bold shadow-inner text-left"></div>
+            <button type="submit" class="btn-design-large py-5 text-sm uppercase tracking-[0.3em] mt-6 text-left cursor-pointer">Akció Alkalmazása (${ids.length} termék)</button>
+        </form>
+    `;
+    window.openModal(html);
+};
+
 
 window.toggleProductStatus = (id) => {
     const p = store.state.products.find(x => x.id === id);

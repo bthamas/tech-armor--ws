@@ -115,12 +115,16 @@ export const store = {
                 this.state.products = mockProducts.map((p, i) => ({ ...p, id: 'm' + i }));
             }
         }
+        // Ensure stock exists on all products
+        this.state.products.forEach(p => {
+            if (typeof p.stock === 'undefined') p.stock = 100;
+        });
 
         if (this.state.orders.length === 0) {
             const mockOrders = [
-                { name: "Kovács János", address: "1011 Budapest, Fő utca 12.", total: 12500, status: "Új rendelés", date: new Date().toISOString() },
-                { name: "Nagy Andrea", address: "4024 Debrecen, Piac utca 5.", total: 8900, status: "Kiszállítva", date: new Date().toISOString() },
-                { name: "Szabó Erika", address: "8000 Székesfehérvár, Budai út 5.", total: 15400, status: "Feldolgozás alatt", date: new Date().toISOString() }
+                { name: "Kovács János", address: "1011 Budapest, Fő utca 12.", total: 12500, status: "Új rendelés", date: new Date().toISOString(), items: [{ name: "Carbon Fiber MagSafe Case", qty: 1, price: 12500 }] },
+                { name: "Nagy Andrea", address: "4024 Debrecen, Piac utca 5.", total: 8900, status: "Kiszállítva", date: new Date().toISOString(), items: [{ name: "Liquid Silicone Case", qty: 1, price: 8900 }] },
+                { name: "Szabó Erika", address: "8000 Székesfehérvár, Budai út 5.", total: 15400, status: "Feldolgozás alatt", date: new Date().toISOString(), items: [{ name: "Devia 9H Nano Glass", qty: 2, price: 7700 }] }
             ];
             if (this.state.demoMode) this.state.orders = mockOrders.map((o, i) => ({ ...o, id: 'om' + i }));
         }
@@ -171,7 +175,19 @@ export const store = {
         document.querySelectorAll('[data-wish-id]').forEach(btn => {
             const id = btn.getAttribute('data-wish-id');
             const icon = btn.querySelector('i');
-            if (icon) icon.className = this.state.wishlist.includes(id) ? 'fa-solid fa-heart text-red-500' : 'fa-regular fa-heart';
+            if (icon) {
+                const isActive = this.state.wishlist.includes(id);
+                icon.classList.remove('fa-regular', 'fa-solid', 'text-red-500');
+                if (isActive) {
+                    icon.classList.add('fa-solid', 'text-red-500');
+                } else {
+                    icon.classList.add('fa-regular');
+                }
+            }
+            const textSpan = btn.querySelector('.wish-text');
+            if (textSpan) {
+                textSpan.innerText = this.state.wishlist.includes(id) ? 'Eltávolítás a kedvencekből' : 'Hozzáadás a kedvencekhez';
+            }
         });
     },
 
