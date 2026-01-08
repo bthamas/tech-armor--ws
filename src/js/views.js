@@ -324,7 +324,15 @@ export const renderView = (shouldScroll = true) => {
         }
     }
 
-    const renderFn = views[view] || views.home;
+    let renderFn = views[view];
+    // Check for admin_subview style mapping
+    if (view === 'admin' && param) {
+        const subView = `admin_${param}`;
+        if (views[subView]) {
+            renderFn = views[subView];
+        }
+    }
+    renderFn = renderFn || views.home;
     const content = document.getElementById('main-content');
     if (content) {
         content.innerHTML = renderFn(param);

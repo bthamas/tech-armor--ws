@@ -556,7 +556,7 @@ export const adminViews = {
                     <button onclick="window.switchTab('shipping')" class="tab-btn text-left px-5 py-3 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-white hover:shadow-sm transition-all text-gray-500" data-tab="shipping"><i class="fa-solid fa-truck-fast w-6"></i> Szállítás</button>
                     <button onclick="window.switchTab('admins')" class="tab-btn text-left px-5 py-3 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-white hover:shadow-sm transition-all text-gray-500" data-tab="admins"><i class="fa-solid fa-users-gear w-6"></i> Adminok</button>
                 </div>
-
+                
                 <!-- Content Area -->
                 <div class="flex-grow p-8 md:p-12">
                     
@@ -622,29 +622,91 @@ export const adminViews = {
                     </div>
 
                 </div>
-            </div>
-            
-            <script>
+
+                </div >
+            </div >
+
+    <script>
                 // Simple Tab Switcher Logic
                 window.switchTab = (tabId) => {
-                    document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-                    document.getElementById('tab-' + tabId).classList.remove('hidden');
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+        document.getElementById('tab-' + tabId).classList.remove('hidden');
                     
                     document.querySelectorAll('.tab-btn').forEach(btn => {
-                        btn.classList.remove('bg-white', 'shadow-sm', 'text-brand-900');
-                        btn.classList.add('text-gray-500');
+            btn.classList.remove('bg-white', 'shadow-sm', 'text-brand-900');
+        btn.classList.add('text-gray-500');
                     });
 
-                    const activeBtn = document.querySelector('.tab-btn[data-tab="' + tabId + '"]');
-                    if(activeBtn) {
-                        activeBtn.classList.add('bg-white', 'shadow-sm', 'text-brand-900');
-                        activeBtn.classList.remove('text-gray-500');
+        const activeBtn = document.querySelector('.tab-btn[data-tab="' + tabId + '"]');
+        if(activeBtn) {
+            activeBtn.classList.add('bg-white', 'shadow-sm', 'text-brand-900');
+        activeBtn.classList.remove('text-gray-500');
                     }
                 };
-            </script>
-        `, 'settings');
+    </script>
+`, 'settings');
     },
 };
+
+// Global Helpers for Admin
+window.toggleBulkMenu = () => {
+    const menu = document.getElementById('bulk-menu');
+    if (menu) menu.classList.toggle('hidden');
+};
+
+window.toggleAllCheckboxes = (source) => {
+    const checkboxes = document.querySelectorAll('.prod-checkbox');
+    checkboxes.forEach(cb => cb.checked = source.checked);
+    window.updateBulkBtn();
+};
+
+window.updateBulkBtn = () => {
+    const count = document.querySelectorAll('.prod-checkbox:checked').length;
+    const btn = document.getElementById('bulk-actions-btn');
+    if (btn) {
+        if (count > 0) {
+            btn.classList.remove('hidden');
+            btn.innerHTML = `<i class="fa-solid fa-layer-group mr-2"></i> Kijelöltek (${count}) <i class="fa-solid fa-chevron-down ml-2"></i>`;
+        } else {
+            btn.classList.add('hidden');
+        }
+    }
+};
+
+window.bulkAction = async (action) => {
+    const checked = Array.from(document.querySelectorAll('.prod-checkbox:checked')).map(cb => cb.value);
+    if (!checked.length) return;
+
+    if (action === 'delete') {
+        if (confirm(`${checked.length} termék törlése. Biztos vagy benne?`)) {
+            // Mock delete
+            store.state.products = store.state.products.filter(p => !checked.includes(p.id));
+            window.showToast(`${checked.length} termék törölve.`);
+            adminViews.products(); // Re-render
+        }
+    } else if (action === 'sale') {
+        // Mock sale
+        store.state.products.forEach(p => {
+            if (checked.includes(p.id)) {
+                p.salePrice = Math.floor(p.price * 0.9); // 10% off
+                p.saleStartDate = new Date().toISOString().split('T')[0];
+            }
+        });
+        window.showToast(`${checked.length} termék akciózva (-10%).`);
+        adminViews.products();
+    }
+    // In a real app we would call backend API here
+};
+
+window.toggleProductStatus = (id) => {
+    const p = store.state.products.find(x => x.id === id);
+    if (p) {
+        p.status = p.status === 'inactive' ? 'active' : 'inactive';
+        adminViews.products(); // Re-render
+        window.showToast(`Termék státusza módosítva: ${p.status === 'active' ? 'Aktív' : 'Inaktív'}`);
+    }
+};
+
 
 function renderMenuItem(id, icon, label, active) {
     const isActive = active === id || (active === 'dashboard' && id === 'dashboard' && !active); // Default dash
