@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="hu" class="scroll-smooth">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TechArmor | Prémium Készülékvédelem</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <script>
+        window.tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'] },
+                    colors: {
+                        brand: {
+                            50: '#f0f7ff',
+                            100: '#e0effe',
+                            500: '#0071e3',
+                            600: '#005bb5',
+                            700: '#004487',
+                            800: '#1d1d1f',
+                            900: '#0a0a0b',
+                        },
+                        surface: {
+                            50: '#f5f5f7',
+                            100: '#e8e8ed',
+                            200: '#d2d2d7',
+                        }
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.3s ease-out forwards',
+                        'slide-up': 'slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                        'pop': 'pop 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards',
+                    },
+                    keyframes: {
+                        fadeIn: { from: { opacity: 0 }, to: { opacity: 1 } },
+                        slideUp: { from: { transform: 'translateY(15px)', opacity: 0 }, to: { transform: 'translateY(0)', opacity: 1 } },
+                        pop: { '0%': { transform: 'scale(0.5)', opacity: 0 }, '100%': { transform: 'scale(1)', opacity: 1 } },
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #ffffff;
+            color: #1d1d1f;
+        }
+
+        body.modal-open {
+            overflow: hidden;
+        }
+
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+
+        .product-card:hover img {
+            transform: scale(1.05);
+        }
+
+        .btn-primary {
+            @apply bg-brand-500 text-white font-bold rounded-full px-6 py-2 hover:bg-brand-600 transition-all active:scale-95 shadow-lg shadow-brand-500/20 flex items-center justify-center gap-2;
+        }
+
+        /* Swapped Designs based on user request */
+        /* Design that was previously Cart, now used for Wishlist */
+        .btn-design-large {
+            @apply relative overflow-hidden bg-brand-900 text-white font-extrabold rounded-2xl px-10 py-5 transition-all duration-300 shadow-2xl hover:bg-black hover:-translate-y-1 active:scale-95 flex items-center justify-center gap-4 text-lg w-full sm:w-auto cursor-pointer;
+        }
+
+        /* Design that was previously Wishlist, now used for Cart */
+        .btn-design-square {
+            @apply w-20 h-20 rounded-2xl border-2 border-gray-100 bg-white flex items-center justify-center transition-all duration-300 hover:border-brand-500 hover:bg-brand-50 text-brand-900 active:scale-90 cursor-pointer shadow-sm;
+        }
+
+        .category-chip {
+            @apply px-4 py-1.5 rounded-full text-[11px] font-black transition-all whitespace-nowrap border border-gray-100 uppercase tracking-widest;
+        }
+
+        .category-chip.active {
+            @apply bg-brand-500 text-white border-brand-500 shadow-lg scale-105;
+        }
+
+        .category-chip:not(.active) {
+            @apply bg-surface-50 text-gray-400 hover:bg-surface-100;
+        }
+
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        #floating-cart-bubble {
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .bubble-expanded {
+            width: 280px !important;
+            border-radius: 20px !important;
+        }
+
+        .progress-bar-inner {
+            transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.5s ease;
+        }
+
+        .thumb-gallery-item {
+            @apply w-20 h-20 rounded-xl object-cover cursor-pointer border-2 border-transparent transition-all opacity-70 hover:opacity-100;
+        }
+
+        .thumb-gallery-item.active {
+            @apply border-brand-500 ring-4 ring-brand-500/10 scale-105 opacity-100;
+        }
+
+        .breadcrumb-item:not(:last-child)::after {
+            content: '\f105';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            @apply mx-3 text-gray-300 text-sm;
+        }
+    </style>
+</head>
+
+<body class="font-sans antialiased overflow-x-hidden">
+
+    <!-- Top Promo Bar -->
+    <div id="top-info-bar"
+        class="hidden text-white text-[10px] py-1.5 text-center font-bold uppercase tracking-[0.2em] z-[60] relative transition-all duration-500">
+        <span id="top-info-text">Ingyenes szállítás 15.000 Ft felett!</span>
+    </div>
+
+    <!-- DB Status Bar -->
+    <div id="status-bar"
+        class="hidden text-white text-[9px] py-1 text-center font-bold uppercase tracking-widest z-[60] relative transition-colors duration-500">
+        <span id="status-text">Kezelés alatt...</span>
+    </div>
+
+    <!-- Loader -->
+    <div id="app-loader"
+        class="fixed inset-0 z-[100] bg-white flex flex-col items-center justify-center transition-opacity duration-500">
+        <div class="w-10 h-10 border-4 border-brand-100 border-t-brand-500 rounded-full animate-spin mb-4"></div>
+        <div class="text-sm font-black uppercase tracking-widest text-gray-400">Tech<span
+                class="text-brand-500">Armor</span> indítása...</div>
+    </div>
+
+    <!-- Header Navigation -->
+    <nav class="sticky top-0 z-50 glass-effect border-b border-gray-100">
+        <div class="container mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-2 cursor-pointer group" onclick="router.navigate('home')">
+                <div
+                    class="bg-brand-500 text-white w-8 h-8 rounded-lg flex items-center justify-center group-hover:rotate-12 transition-transform shadow-md">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+                <span class="text-xl font-black tracking-tighter text-gray-900 uppercase">TechArmor</span>
+            </div>
+
+            <div class="flex items-center gap-2 sm:gap-4">
+                <div class="relative group hidden sm:block">
+                    <input type="text" id="global-search" placeholder="Keresés..."
+                        class="bg-surface-50 border-none rounded-full pl-9 pr-4 py-1.5 text-xs w-32 focus:w-48 transition-all outline-none focus:ring-2 focus:ring-brand-500/20">
+                    <i
+                        class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-[10px]"></i>
+                </div>
+
+                <button onclick="router.navigate('wishlist')"
+                    class="relative p-2 text-gray-500 hover:text-brand-500 transition-colors cursor-pointer">
+                    <i class="fa-regular fa-heart text-lg"></i>
+                    <span id="wishlist-badge"
+                        class="absolute top-1 right-1 bg-red-500 text-white text-[8px] min-w-[14px] h-3.5 rounded-full flex items-center justify-center hidden border border-white font-bold">0</span>
+                </button>
+
+                <button onclick="router.navigate('cart')"
+                    class="relative p-2 text-gray-500 hover:text-brand-500 transition-colors cursor-pointer">
+                    <i class="fa-solid fa-bag-shopping text-lg"></i>
+                    <span id="cart-badge"
+                        class="absolute top-1 right-1 bg-brand-500 text-white text-[8px] min-w-[14px] h-3.5 rounded-full flex items-center justify-center hidden border border-white font-bold">0</span>
+                </button>
+
+                <div class="w-px h-6 bg-gray-100 mx-1"></div>
+
+                <button id="admin-btn" class="hidden text-gray-400 hover:text-brand-900 p-2 cursor-pointer"
+                    onclick="router.navigate('admin_products')">
+                    <i class="fa-solid fa-user-shield"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main id="main-content" class="min-h-[75vh] container mx-auto px-4 py-8">
+    </main>
+
+    <!-- Floating Bubble Cart -->
+    <div id="floating-cart-bubble" onclick="router.navigate('cart')"
+        class="fixed bottom-6 right-6 z-[100] w-14 h-14 bg-brand-900 text-white rounded-full shadow-2xl flex items-center justify-center cursor-pointer hidden overflow-hidden border-2 border-white group">
+        <img id="bubble-bg-img" src=""
+            class="absolute inset-0 w-full h-full object-cover opacity-40 transition-opacity">
+        <div id="bubble-ui" class="relative z-10 flex items-center justify-center w-full h-full">
+            <i class="fa-solid fa-cart-shopping text-lg"></i>
+            <span id="bubble-count"
+                class="absolute -top-1 -right-1 bg-brand-500 text-white text-[9px] w-5 h-5 rounded-full flex items-center justify-center font-bold">0</span>
+        </div>
+        <div id="bubble-preview" class="hidden absolute left-0 w-full px-4 py-3 bg-brand-900">
+            <div class="flex items-center gap-3 text-left">
+                <img id="bubble-prod-thumb" src="" class="w-10 h-10 rounded-lg object-cover bg-white/10">
+                <div class="overflow-hidden">
+                    <div class="text-[9px] text-brand-500 font-black uppercase mb-0.5">Sikeresen hozzáadva!</div>
+                    <div id="bubble-prod-name" class="text-[10px] font-bold truncate text-white">Termék</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-brand-800 text-white pt-20 pb-12 mt-24 border-t border-white/5">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-20 text-left">
+                <div>
+                    <div class="flex items-center gap-2 mb-8">
+                        <div
+                            class="bg-brand-500 text-white w-7 h-7 rounded-lg flex items-center justify-center text-xs shadow-lg">
+                            <i class="fa-solid fa-shield-halved"></i>
+                        </div>
+                        <span class="text-2xl font-black tracking-tighter uppercase">TechArmor</span>
+                    </div>
+                    <p class="text-gray-400 text-sm leading-relaxed mb-8 max-w-xs">
+                        A készüléked megérdemli a prémium védelmet. Devia alapú technológiával és kiváló minőségű
+                        anyagokkal dolgozunk.
+                    </p>
+                    <div class="flex gap-4">
+                        <a href="#"
+                            class="w-11 h-11 rounded-xl bg-white/5 flex items-center justify-center hover:bg-brand-500 hover:text-white transition-all"><i
+                                class="fa-brands fa-facebook-f text-lg"></i></a>
+                        <a href="#"
+                            class="w-11 h-11 rounded-xl bg-white/5 flex items-center justify-center hover:bg-brand-500 hover:text-white transition-all"><i
+                                class="fa-brands fa-instagram text-lg"></i></a>
+                        <a href="#"
+                            class="w-11 h-11 rounded-xl bg-white/5 flex items-center justify-center hover:bg-brand-500 hover:text-white transition-all"><i
+                                class="fa-brands fa-tiktok text-lg"></i></a>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="text-[10px] font-black uppercase tracking-[0.2em] mb-10 text-brand-500">Termékeink</h4>
+                    <ul class="space-y-5 text-sm text-gray-400 font-medium">
+                        <li><button onclick="window.setCategory('Tokok')"
+                                class="hover:text-white transition-colors cursor-pointer">Telefontokok</button></li>
+                        <li><button onclick="window.setCategory('Fóliák')"
+                                class="hover:text-white transition-colors cursor-pointer">Üvegfóliák</button></li>
+                        <li><button onclick="window.setCategory('Kamera védők')"
+                                class="hover:text-white transition-colors cursor-pointer">Kamera védők</button></li>
+                        <li><button onclick="window.setCategory('Mind')"
+                                class="hover:text-white transition-colors cursor-pointer">Minden Termék</button></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-[10px] font-black uppercase tracking-[0.2em] mb-10 text-brand-500">Információk</h4>
+                    <ul class="space-y-5 text-sm text-gray-400 font-medium">
+                        <li><a href="#" class="hover:text-white transition-colors">Házhozszállítás</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Garanciális feltételek</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Adatkezelési nyilatkozat</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Vásárlási ÁSZF</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-[10px] font-black uppercase tracking-[0.2em] mb-10 text-brand-500">Kapcsolat</h4>
+                    <ul class="space-y-5 text-sm text-gray-400 font-medium">
+                        <li class="flex items-start gap-4"><i
+                                class="fa-solid fa-location-dot mt-1 text-brand-500 text-lg"></i> 1051 Budapest,
+                            Erzsébet tér 1.</li>
+                        <li class="flex items-center gap-4"><i class="fa-solid fa-phone text-brand-500 text-lg"></i> +36
+                            30 123 4567</li>
+                        <li class="flex items-center gap-4"><i class="fa-solid fa-envelope text-brand-500 text-lg"></i>
+                            support@techarmor.hu</li>
+                    </ul>
+                </div>
+            </div>
+            <div
+                class="pt-10 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6 opacity-40">
+                <p class="text-[10px] text-gray-500 font-black uppercase tracking-widest">© 2026 TechArmor Pro. All
+                    rights reserved.</p>
+                <div class="flex gap-6 text-2xl">
+                    <i class="fa-brands fa-cc-visa"></i>
+                    <i class="fa-brands fa-cc-mastercard"></i>
+                    <i class="fa-brands fa-apple-pay"></i>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Universal Modal Container -->
+    <div id="app-modal"
+        class="fixed inset-0 z-[1000] hidden flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-fade-in">
+        <div class="bg-white rounded-[2.5rem] w-full max-w-2xl overflow-hidden shadow-2xl" id="modal-wrapper">
+            <div id="modal-container" class="max-h-[85vh] overflow-y-auto p-10 hide-scrollbar"></div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Area -->
+    <div id="toast-container" class="fixed bottom-24 right-6 z-[1000] flex flex-col gap-3 pointer-events-none"></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, doc, setDoc, getDoc, collection, query, getDocs, deleteDoc, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+
+        // Initialized with provided Firebase Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyA3yqDcBjrud7liFr_PdYFtb5_khX7NkPg",
+            authDomain: "egyedi-ws.firebaseapp.com",
+            projectId: "egyedi-ws",
+            storageBucket: "egyedi-ws.firebasestorage.app",
+            messagingSenderId: "693161953526",
+            appId: "1:693161953526:web:32b302b02d54450688c4d7"
+        };
+        const appId = 'egyedi-ws';
+
+        let db, auth;
+        try {
+            const fbApp = initializeApp(firebaseConfig);
+            db = getFirestore(fbApp);
+            auth = getAuth(fbApp);
+        } catch (e) { console.error("Firebase init failed."); }
+
+        class TechBackend {
+            constructor() { this.basePath = ['artifacts', appId, 'public', 'data']; }
+            coll(n) { return collection(db, ...this.basePath, n); }
+            doc(n, i) { return doc(db, ...this.basePath, n, i); }
+
+            async fetchAll(n) {
+                if (window.store.state.demoMode || !auth?.currentUser) return this.getLocal(n);
+                try {
+                    const s = await getDocs(this.coll(n));
+                    const d = s.docs.map(x => ({ id: x.id, ...x.data() }));
+                    this.setLocal(n, d);
+                    return d;
+                } catch (e) {
+                    if (e.code === 'permission-denied') window.store.activateDemoMode();
+                    return this.getLocal(n);
+                }
+            }
+
+            async save(n, d) {
+                if (window.store.state.demoMode || !auth?.currentUser) {
+                    let items = this.getLocal(n);
+                    if (d.id) items = items.map(x => x.id === d.id ? d : x);
+                    else { d.id = 'L' + Date.now(); items.push(d); }
+                    this.setLocal(n, items); return d.id;
+                }
+                try {
+                    if (d.id) {
+                        const id = d.id; const clean = { ...d }; delete clean.id;
+                        await setDoc(this.doc(n, id), clean, { merge: true }); return id;
+                    }
+                    const res = await addDoc(this.coll(n), d); return res.id;
+                } catch (e) {
+                    window.store.activateDemoMode();
+                    return this.save(n, d);
+                }
+            }
+
+            async delete(n, i) {
+                if (window.store.state.demoMode || !auth?.currentUser) {
+                    this.setLocal(n, this.getLocal(n).filter(x => x.id !== i)); return;
+                }
+                try { await deleteDoc(this.doc(n, i)); } catch (e) { window.store.activateDemoMode(); }
+            }
+
+            getLocal(n) { return JSON.parse(localStorage.getItem(`ta_v6_${n}`)) || []; }
+            setLocal(n, d) { localStorage.setItem(`ta_v6_${n}`, JSON.stringify(d)); }
+        }
+
+        const backend = new TechBackend();
+
+        window.store = {
+            state: {
+                products: [], cart: JSON.parse(localStorage.getItem('ta_cart')) || [],
+                wishlist: JSON.parse(localStorage.getItem('ta_wishlist')) || [],
+                orders: [], searchQuery: '', currentCategory: 'Mind',
+                demoMode: false,
+                settings: { bannerEnabled: true, bannerText: "Ingyenes szállítás 15.000 Ft felett!", bannerColor: "#0071e3" }
+            },
+
+            async init() {
+                const timeout = setTimeout(() => {
+                    if (this.state.products.length === 0) {
+                        window.store.activateDemoMode();
+                        window.store.loadData().then(() => window.store.finishInit());
+                    }
+                }, 4000);
+
+                try {
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) await signInWithCustomToken(auth, __initial_auth_token);
+                    else await signInAnonymously(auth);
+                } catch (e) { window.store.activateDemoMode(); }
+
+                onAuthStateChanged(auth, async (u) => {
+                    clearTimeout(timeout);
+                    if (!u) window.store.state.demoMode = true;
+                    await window.store.loadData();
+                    window.store.finishInit();
+                });
+            },
+
+            activateDemoMode() {
+                window.store.state.demoMode = true;
+                const bar = document.getElementById('status-bar');
+                const text = document.getElementById('status-text');
+                if (bar && text) {
+                    bar.classList.remove('hidden');
+                    bar.classList.add('bg-amber-500');
+                    text.innerHTML = '<i class="fa-solid fa-flask mr-1"></i> Fallback Mód (Helyi Adatok)';
+                }
+            },
+
+            finishInit() {
+                document.getElementById('app-loader')?.classList.add('opacity-0');
+                setTimeout(() => document.getElementById('app-loader')?.classList.add('hidden'), 500);
+
+                const bar = document.getElementById('status-bar');
+                const text = document.getElementById('status-text');
+                if (bar && text && !window.store.state.demoMode) {
+                    bar.classList.remove('hidden');
+                    bar.classList.add('bg-green-600');
+                    text.innerHTML = '<i class="fa-solid fa-cloud-check mr-1"></i> Felhő Adatbázis Kapcsolat Aktív';
+                }
+
+                document.getElementById('admin-btn')?.classList.remove('hidden');
+                window.store.applySettings();
+                window.renderView();
+            },
+
+            applySettings() {
+                const bar = document.getElementById('top-info-bar');
+                if (bar) {
+                    bar.style.backgroundColor = window.store.state.settings.bannerColor;
+                    document.getElementById('top-info-text').innerText = window.store.state.settings.bannerText;
+                    bar.classList.toggle('hidden', !window.store.state.settings.bannerEnabled);
+                }
+            },
+
+            async loadData() {
+                window.store.state.products = await backend.fetchAll('products');
+                window.store.state.orders = await backend.fetchAll('orders');
+
+                if (window.store.state.products.length === 0) {
+                    const mockProducts = [
+                        // Tokok (4 db)
+                        { name: "Carbon Fiber MagSafe Case - iPhone 15", price: 9990, salePrice: 7990, category: "Tokok", image: "https://images.unsplash.com/photo-1541807084-5c52b6b3adef?w=800", images: ["https://images.unsplash.com/photo-1541807084-5c52b6b3adef?w=800", "https://images.unsplash.com/photo-1586105251261-72a756613a01?w=800", "https://images.unsplash.com/photo-1505156868547-9b49f4df4e04?w=800"], description: "Prémium szénszálas kialakítás MagSafe kompatibilitással." },
+                        { name: "Liquid Silicone Soft-Touch Case", price: 6990, category: "Tokok", image: "https://images.unsplash.com/photo-1603313011101-31405e54d688?w=800", images: ["https://images.unsplash.com/photo-1603313011101-31405e54d688?w=800", "https://images.unsplash.com/photo-1591337676887-a217a6970a8a?w=800"], description: "Selymes tapintású, ütésálló szilikon tok." },
+                        { name: "Rugged Armor Extreme Defense", price: 11990, category: "Tokok", image: "https://images.unsplash.com/photo-1586953208448-b95a79798f07?w=800", images: ["https://images.unsplash.com/photo-1586953208448-b95a79798f07?w=800"], description: "Katonai szintű védelem a legextrémebb helyzetekre." },
+                        { name: "Minimalist Clear Back Case", price: 5490, category: "Tokok", image: "https://images.unsplash.com/photo-1576133600321-4d375a0048e4?w=800", images: ["https://images.unsplash.com/photo-1576133600321-4d375a0048e4?w=800"], description: "Kristálytiszta hátlap, amely kiemeli a telefon színét." },
+                        // Fóliák (4 db)
+                        { name: "Devia 9H Nano Glass Pro", price: 4990, category: "Fóliák", image: "https://images.unsplash.com/photo-1616348436168-de43ad0db179?w=800", images: ["https://images.unsplash.com/photo-1616348436168-de43ad0db179?w=800", "https://images.unsplash.com/photo-1592890288564-76628a30a657?w=800"], description: "Karcálló nano-üveg technológia a kijelző épségéért." },
+                        { name: "Matte Privacy Screen Protector", price: 5990, category: "Fóliák", image: "https://images.unsplash.com/photo-1512499617640-c74ae3a79d37?w=800", images: ["https://images.unsplash.com/photo-1512499617640-c74ae3a79d37?w=800"], description: "Betekintés elleni védelem és ujjlenyomat-mentes felület." },
+                        { name: "Ultra-Clear HD Protection", price: 3990, category: "Fóliák", image: "https://images.unsplash.com/photo-1591337676887-a217a6970a8a?w=800", images: ["https://images.unsplash.com/photo-1591337676887-a217a6970a8a?w=800"], description: "Láthatatlan védelem kristálytiszta minőségben." },
+                        { name: "Anti-Blue Light Shield", price: 5490, category: "Fóliák", image: "https://images.unsplash.com/photo-1586953208448-b95a79798f07?w=800", images: ["https://images.unsplash.com/photo-1586953208448-b95a79798f07?w=800"], description: "Szűri a kék fényt, megvédve a szemeket a fáradástól." },
+                        // Kamera védők (4 db)
+                        { name: "Sapphire Lens Guard Ring", price: 3490, category: "Kamera védők", image: "https://images.unsplash.com/photo-1591337676887-a217a6970a8a?w=800", images: ["https://images.unsplash.com/photo-1591337676887-a217a6970a8a?w=800"], description: "Egyedi gyűrűk a lencsék teljes körű védelmére." },
+                        { name: "Full Camera Area Protector", price: 2990, category: "Kamera védők", image: "https://images.unsplash.com/photo-1616348436168-de43ad0db179?w=800", images: ["https://images.unsplash.com/photo-1616348436168-de43ad0db179?w=800"], description: "A teljes kameraszigetet lefedő edzett üveg védelem." },
+                        { name: "Alu-Pro Lens Frame", price: 4490, category: "Kamera védők", image: "https://images.unsplash.com/photo-1541807084-5c52b6b3adef?w=800", images: ["https://images.unsplash.com/photo-1541807084-5c52b6b3adef?w=800"], description: "Alumínium keretes védelem a karcok ellen." },
+                        { name: "Bling Diamond Camera Cover", price: 3990, category: "Kamera védők", image: "https://images.unsplash.com/photo-1586105251261-72a756613a01?w=800", images: ["https://images.unsplash.com/photo-1586105251261-72a756613a01?w=800"], description: "Csillogó kövekkel díszített prémium védőgyűrűk." }
+                    ];
+                    if (!window.store.state.demoMode && auth?.currentUser) {
+                        for (const p of mockProducts) await backend.save('products', p);
+                        window.store.state.products = await backend.fetchAll('products');
+                    } else {
+                        window.store.state.products = mockProducts.map((p, i) => ({ ...p, id: 'm' + i }));
+                    }
+                }
+
+                if (window.store.state.orders.length === 0) {
+                    const mockOrders = [
+                        { name: "Kovács János", address: "1011 Budapest, Fő utca 12.", total: 12500, status: "Új rendelés", date: new Date().toISOString() },
+                        { name: "Nagy Andrea", address: "4024 Debrecen, Piac utca 5.", total: 8900, status: "Kiszállítva", date: new Date().toISOString() },
+                        { name: "Szabó Erika", address: "8000 Székesfehérvár, Budai út 5.", total: 15400, status: "Feldolgozás alatt", date: new Date().toISOString() }
+                    ];
+                    if (window.store.state.demoMode) window.store.state.orders = mockOrders.map((o, i) => ({ ...o, id: 'om' + i }));
+                }
+                window.store.updateUIBadges();
+            },
+
+            addToCart(id) {
+                const p = window.store.state.products.find(x => x.id === id);
+                if (!p) return;
+                const exist = window.store.state.cart.find(i => i.id === p.id);
+                const price = p.salePrice || p.price;
+                if (exist) exist.qty++; else window.store.state.cart.push({ ...p, price, qty: 1 });
+                window.store.saveCart();
+                window.expandFloatingCart(p);
+            },
+
+            saveCart() {
+                localStorage.setItem('ta_cart', JSON.stringify(window.store.state.cart));
+                window.store.updateUIBadges();
+            },
+
+            toggleWishlist(id) {
+                const idx = window.store.state.wishlist.indexOf(id);
+                if (idx > -1) window.store.state.wishlist.splice(idx, 1); else window.store.state.wishlist.push(id);
+                localStorage.setItem('ta_wishlist', JSON.stringify(window.store.state.wishlist));
+                window.store.updateUIBadges();
+                if (window.location.hash.includes('wishlist')) window.renderView(false);
+            },
+
+            updateUIBadges() {
+                const c = window.store.state.cart.reduce((a, b) => a + b.qty, 0);
+                const w = window.store.state.wishlist.length;
+                const setBadge = (id, val) => {
+                    const el = document.getElementById(id);
+                    if (el) { el.innerText = val; el.classList.toggle('hidden', val === 0); }
+                };
+                setBadge('cart-badge', c); setBadge('wishlist-badge', w); setBadge('bubble-count', c);
+                if (c > 0) document.getElementById('floating-cart-bubble')?.classList.remove('hidden');
+
+                document.querySelectorAll('[data-wish-id]').forEach(btn => {
+                    const id = btn.getAttribute('data-wish-id');
+                    const icon = btn.querySelector('i');
+                    if (icon) icon.className = window.store.state.wishlist.includes(id) ? 'fa-solid fa-heart text-red-500' : 'fa-regular fa-heart';
+                });
+            }
+        };
+
+        window.renderBreadcrumbs = () => {
+            const hash = window.location.hash.substring(1) || 'home';
+            const [view, param] = hash.split('/');
+            if (view === 'home' || view === '') return '';
+
+            let items = [`<button onclick="router.navigate('home')" class="hover:text-brand-500 transition-colors breadcrumb-item flex items-center gap-2 cursor-pointer font-bold"><i class="fa-solid fa-house"></i> Kezdőlap</button>`];
+
+            if (view === 'product') {
+                const p = window.store.state.products.find(x => x.id === param);
+                if (p) {
+                    items.push(`<button onclick="window.setCategory('${p.category}')" class="hover:text-brand-500 transition-colors breadcrumb-item cursor-pointer font-bold">${p.category}</button>`);
+                    items.push(`<span class="text-gray-400 font-extrabold truncate max-w-[150px] sm:max-w-none">${p.name}</span>`);
+                }
+            } else if (view === 'cart') {
+                items.push(`<span class="text-gray-900 font-black">Bevásárlókosár</span>`);
+            } else if (view === 'wishlist') {
+                items.push(`<span class="text-gray-900 font-black">Kedvelt termékek</span>`);
+            } else if (view === 'checkout') {
+                items.push(`<button onclick="router.navigate('cart')" class="breadcrumb-item cursor-pointer font-bold">Kosár</button>`);
+                items.push(`<span class="text-gray-900 font-black">Pénztár</span>`);
+            } else if (view.startsWith('admin')) {
+                items.push(`<span class="text-gray-900 font-black tracking-widest">Admin Hub</span>`);
+            }
+
+            return `
+                <div class="flex items-center text-[12px] font-black uppercase tracking-widest text-gray-900 mb-10 animate-fade-in bg-surface-50 px-8 py-5 rounded-[1.5rem] border border-gray-100 shadow-sm overflow-x-auto hide-scrollbar whitespace-nowrap">
+                    ${items.join('')}
+                </div>
+            `;
+        };
+
+        window.getProductsGridHtml = (list = null) => {
+            let filtered = list || window.store.state.products;
+            if (!list) {
+                if (window.store.state.currentCategory !== 'Mind') filtered = filtered.filter(p => p.category === window.store.state.currentCategory);
+                if (window.store.state.searchQuery) filtered = filtered.filter(p => p.name.toLowerCase().includes(window.store.state.searchQuery.toLowerCase()));
+            }
+            return filtered.map(p => `
+                <div class="product-card animate-slide-up bg-white rounded-[2rem] border border-gray-100 p-5 transition-all hover:shadow-xl flex flex-col text-left group">
+                    <div class="relative aspect-square rounded-3xl overflow-hidden bg-surface-50 mb-4 cursor-pointer" onclick="router.navigate('product', '${p.id}')">
+                        <img src="${p.images?.[0] || p.image}" class="w-full h-full object-cover transition-transform duration-700">
+                        <button data-wish-id="${p.id}" onclick="event.stopPropagation(); window.store.toggleWishlist('${p.id}')" class="absolute top-4 right-4 w-10 h-10 rounded-full glass-effect flex items-center justify-center text-gray-400 hover:text-red-500 shadow-sm active:scale-90 cursor-pointer">
+                            <i class="${window.store.state.wishlist.includes(p.id) ? 'fa-solid fa-heart text-red-500' : 'fa-regular fa-heart'}"></i>
+                        </button>
+                    </div>
+                    <h3 class="font-bold text-gray-900 text-sm mb-1 leading-tight truncate">${p.name}</h3>
+                    <p class="text-[9px] text-brand-500 font-black uppercase mb-4 tracking-widest">${p.category}</p>
+                    <div class="flex items-center justify-between mt-auto">
+                        <div class="flex flex-col text-left">
+                            ${p.salePrice ? `<span class="text-[10px] text-gray-400 line-through">${p.price.toLocaleString()} Ft</span>` : ''}
+                            <span class="text-lg font-black text-gray-900">${(p.salePrice || p.price).toLocaleString()} Ft</span>
+                        </div>
+                        <button onclick="window.store.addToCart('${p.id}')" class="w-10 h-10 rounded-2xl bg-brand-500 text-white flex items-center justify-center hover:bg-brand-600 transition-all shadow-lg active:scale-90 cursor-pointer">
+                            <i class="fa-solid fa-plus"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('') || '<div class="col-span-full py-20 text-center text-gray-400 text-xs font-black uppercase tracking-widest">Nincs megjeleníthető termék</div>';
+        };
+
+        window.views = {
+            home: () => `
+                <div class="mb-12 rounded-[3rem] overflow-hidden bg-brand-900 h-[320px] sm:h-[450px] relative flex items-center px-8 md:px-16 animate-fade-in shadow-2xl">
+                    <div class="relative z-10 max-w-lg text-left">
+                        <span class="text-brand-500 font-black uppercase tracking-[0.3em] text-[10px] mb-4 block">Premium Phone Accessories</span>
+                        <h1 class="text-4xl md:text-6xl font-extrabold text-white mb-8 leading-tight tracking-tighter">Vigyázz rá <br>profizmussal.</h1>
+                        <button class="btn-primary px-10 py-4 cursor-pointer" onclick="document.getElementById('shop').scrollIntoView({behavior:'smooth'})">Vásárlás <i class="fa-solid fa-arrow-down ml-2 text-xs"></i></button>
+                    </div>
+                    <img src="https://images.unsplash.com/photo-1616348436168-de43ad0db179?w=1200" class="absolute right-0 top-0 h-full w-full object-cover opacity-20" style="mask-image: linear-gradient(to left, black 20%, transparent);">
+                </div>
+                <div id="shop" class="text-left scroll-mt-24">
+                    <div class="flex gap-2 overflow-x-auto pb-8 hide-scrollbar">
+                        ${['Mind', 'Tokok', 'Fóliák', 'Kamera védők'].map(c => `<button onclick="window.setCategory('${c}')" class="category-chip ${window.store.state.currentCategory === c ? 'active' : ''} cursor-pointer">${c}</button>`).join('')}
+                    </div>
+                    <div id="catalog-grid" class="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+                        ${window.getProductsGridHtml()}
+                    </div>
+                </div>
+            `,
+            wishlist: () => `
+                <div class="text-left max-w-6xl mx-auto animate-fade-in">
+                    ${window.renderBreadcrumbs()}
+                    <h1 class="text-3xl font-black mb-10 tracking-tight text-gray-900">Kedvenceid</h1>
+                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-8">
+                        ${window.getProductsGridHtml(window.store.state.products.filter(p => window.store.state.wishlist.includes(p.id)))}
+                    </div>
+                </div>
+            `,
+            product: (id) => {
+                const p = window.store.state.products.find(x => x.id === id);
+                if (!p) return `<div class="py-24 text-center text-gray-400">Termék nem található.</div>`;
+                const imgs = p.images && p.images.length > 0 ? p.images : [p.image];
+                return `
+                    <div class="max-w-7xl mx-auto animate-fade-in pt-4">
+                        ${window.renderBreadcrumbs()}
+                        <div class="grid grid-cols-1 md:grid-cols-12 gap-10 md:gap-20 text-left">
+                            <div class="md:col-span-7 space-y-8">
+                                <div class="bg-surface-50 rounded-[3rem] overflow-hidden aspect-square shadow-inner border border-gray-100 relative group">
+                                    <img id="big-img" src="${imgs[0]}" class="w-full h-full object-cover transition-opacity duration-300">
+                                </div>
+                                <div class="flex gap-4 overflow-x-auto pb-2 hide-scrollbar">
+                                    ${imgs.map((img, idx) => `
+                                        <img src="${img}" 
+                                             onclick="document.getElementById('big-img').src='${img}'; document.querySelectorAll('.thumb-gallery-item').forEach(el => el.classList.remove('active')); this.classList.add('active');" 
+                                             class="thumb-gallery-item ${idx === 0 ? 'active' : ''}">
+                                    `).join('')}
+                                </div>
+                            </div>
+
+                            <div class="md:col-span-5 flex flex-col justify-center py-6">
+                                <span class="text-brand-500 font-black text-[10px] tracking-widest uppercase mb-4">${p.category}</span>
+                                <h1 class="text-4xl lg:text-5xl font-extrabold mb-8 tracking-tighter text-gray-900 leading-tight">${p.name}</h1>
+                                <div class="mb-10 flex items-center gap-6">
+                                    <div class="text-4xl font-black text-brand-900">${(p.salePrice || p.price).toLocaleString()} Ft</div>
+                                    ${p.salePrice ? `<div class="text-xl text-gray-300 line-through font-bold mt-2">${p.price.toLocaleString()} Ft</div>` : ''}
+                                </div>
+                                <div class="bg-surface-50 p-8 rounded-[1.75rem] border border-gray-100/50 mb-12">
+                                    <p class="text-gray-500 text-lg leading-relaxed font-medium">${p.description || 'Válassza a prémium minőséget készüléke védelméhez.'}</p>
+                                </div>
+                                
+                                <!-- Buttons Design SWAPPED according to request -->
+                                <div class="flex flex-col sm:flex-row gap-4 mb-12">
+                                    <!-- Cart now uses the prominent DESIGN previously used for wishlist in v6.0 -->
+                                    <button onclick="window.store.addToCart('${p.id}')" class="btn-design-large bg-brand-900 cursor-pointer">
+                                        <i class="fa-solid fa-cart-plus"></i> Kosárba helyezem
+                                    </button>
+                                    <!-- Wishlist now uses the square DESIGN previously used for wishlist square button -->
+                                    <button onclick="window.store.toggleWishlist('${p.id}')" class="btn-design-square cursor-pointer">
+                                        <i class="${window.store.state.wishlist.includes(p.id) ? 'fa-solid text-red-500 scale-125' : 'fa-regular'} fa-heart text-2xl"></i>
+                                    </button>
+                                </div>
+
+                                <div class="grid grid-cols-2 gap-8 border-t border-gray-100 pt-10">
+                                    <div class="flex items-center gap-4 text-gray-400 font-black text-[10px] uppercase tracking-widest">
+                                        <i class="fa-solid fa-truck-fast text-brand-500 text-xl"></i> Gyors Szállítás
+                                    </div>
+                                    <div class="flex items-center gap-4 text-gray-400 font-black text-[10px] uppercase tracking-widest">
+                                        <i class="fa-solid fa-shield-halved text-brand-500 text-xl"></i> 1 év Garancia
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            },
+            cart: () => {
+                const total = window.store.state.cart.reduce((s, i) => s + (i.price * i.qty), 0);
+                const threshold = 15000;
+                const remaining = Math.max(0, threshold - total);
+                const percentage = Math.min(100, (total / threshold) * 100);
+                const isFree = remaining <= 0;
+
+                if (window.store.state.cart.length === 0) return `<div class="py-32 text-center animate-fade-in"><h2 class="text-3xl font-black mb-6 text-gray-900 text-center">A kosarad üres</h2><button onclick="router.navigate('home')" class="btn-primary mx-auto px-12 py-4 shadow-xl">Válogatás folytatása</button></div>`;
+                return `
+                    <div class="max-w-4xl mx-auto text-left animate-fade-in">
+                        ${window.renderBreadcrumbs()}
+                        <h1 class="text-3xl font-black mb-12 tracking-tight text-gray-900">Kosár</h1>
+                        
+                        <div class="bg-surface-50 p-8 rounded-[2.5rem] mb-12 border border-gray-100 shadow-sm relative overflow-hidden transition-all duration-500 ${isFree ? 'ring-2 ring-green-500/20' : ''}">
+                            <div class="flex justify-between items-center mb-4 relative z-10">
+                                <span class="text-xs font-black uppercase tracking-widest ${isFree ? 'text-green-600' : 'text-gray-500'}">Ingyenes szállítás</span>
+                                <span class="text-[11px] font-black uppercase ${isFree ? 'text-green-600 animate-pulse' : 'text-brand-500'}">${isFree ? 'ELÉRTED!' : remaining.toLocaleString() + ' Ft hiányzik'}</span>
+                            </div>
+                            <div class="w-full bg-gray-200 h-3 rounded-full overflow-hidden shadow-inner">
+                                <div class="progress-bar-inner ${isFree ? 'bg-green-500 shadow-[0_0_15px_rgba(34,197,94,0.4)]' : 'bg-brand-500'} h-full" style="width: ${percentage}%"></div>
+                            </div>
+                        </div>
+
+                        <div class="space-y-4 mb-16">
+                            ${window.store.state.cart.map((i, idx) => `
+                                <div class="flex items-center gap-6 p-6 bg-white rounded-3xl border border-gray-100 transition-all hover:shadow-lg group">
+                                    <img src="${i.images?.[0] || i.image}" class="w-20 h-20 rounded-2xl object-cover bg-surface-50 shadow-sm transition-transform group-hover:scale-105">
+                                    <div class="flex-grow"><h4 class="font-bold text-lg text-gray-900">${i.name}</h4><p class="text-[10px] text-brand-500 font-black uppercase mt-1 tracking-widest">${i.category}</p></div>
+                                    <div class="flex items-center gap-8">
+                                        <div class="flex items-center bg-surface-50 rounded-2xl px-4 py-2"><button onclick="window.updateQty(${idx}, -1)" class="w-6 h-6 font-bold text-gray-400 hover:text-brand-500 transition-colors cursor-pointer">-</button><span class="w-10 text-center font-black">${i.qty}</span><button onclick="window.updateQty(${idx}, 1)" class="w-6 h-6 font-bold text-gray-400 hover:text-brand-500 transition-colors cursor-pointer">+</button></div>
+                                        <div class="text-lg font-black w-28 text-right text-gray-900">${(i.price * i.qty).toLocaleString()} Ft</div>
+                                        <button onclick="window.removeFromCart(${idx})" class="text-gray-300 hover:text-red-500 transition-colors p-2 cursor-pointer"><i class="fa-solid fa-trash-can text-lg"></i></button>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+
+                        <div class="bg-brand-900 text-white p-12 rounded-[3rem] flex flex-col sm:flex-row justify-between items-center gap-10 shadow-2xl relative overflow-hidden">
+                            <div class="absolute -right-20 -top-20 w-80 h-80 bg-brand-500 opacity-10 rounded-full blur-[100px]"></div>
+                            <div class="text-center sm:text-left relative z-10">
+                                <p class="text-[11px] opacity-60 uppercase font-black tracking-widest mb-2">Végösszeg összesen</p>
+                                <div class="text-6xl font-black">${total.toLocaleString()} <span class="text-3xl font-bold">Ft</span></div>
+                                ${isFree ? `<p class="text-green-400 font-black text-[10px] mt-4 uppercase tracking-[0.2em] animate-bounce"><i class="fa-solid fa-check"></i> Ingyenes szállítás aktiválva</p>` : ''}
+                            </div>
+                            <button onclick="router.navigate('checkout')" class="w-full sm:w-auto bg-brand-500 text-white px-20 py-6 rounded-2xl font-black text-2xl active:scale-95 transition-all shadow-xl hover:bg-brand-600 relative z-10 flex items-center justify-center gap-4 cursor-pointer">Pénztár <i class="fa-solid fa-arrow-right text-sm"></i></button>
+                        </div>
+                    </div>
+                `;
+            },
+
+            // ADMIN VIEWS
+            admin_products: () => window.views.adminLayout(`
+                <div class="flex justify-between items-center mb-10 text-left"><h2 class="text-2xl font-black text-gray-900 uppercase tracking-tighter text-left">Termékkatalógus</h2><button class="btn-primary text-[10px] py-3 px-8 uppercase tracking-widest" onclick="window.openProductForm()">+ Új Termék</button></div>
+                <div class="bg-white rounded-3xl border border-gray-100 overflow-hidden shadow-sm text-left"><div class="divide-y divide-gray-50 text-left">${window.store.state.products.map(p => `
+                    <div class="p-6 flex items-center justify-between group hover:bg-surface-50 transition-all text-left">
+                        <div class="flex items-center gap-6 text-left"><img src="${p.images?.[0] || p.image}" class="w-16 h-16 rounded-2xl object-cover border border-gray-100 shadow-sm text-left"><div class="text-left"><div class="font-black text-gray-900 text-left">${p.name}</div><div class="text-[10px] text-gray-400 font-black uppercase mt-1 tracking-widest text-left">${p.category} | ${p.price.toLocaleString()} Ft</div></div></div>
+                        <div class="flex gap-2 text-left">
+                            <button onclick='window.openProductForm(${JSON.stringify(p).replace(/'/g, "&#39;")})' class="w-10 h-10 rounded-xl bg-white border border-gray-100 text-gray-400 hover:text-brand-500 flex items-center justify-center shadow-sm cursor-pointer transition-all"><i class="fa-solid fa-pen text-xs text-left"></i></button>
+                            <button onclick="window.deleteProduct('${p.id}')" class="w-10 h-10 rounded-xl bg-white border border-gray-100 text-gray-400 hover:text-red-500 flex items-center justify-center shadow-sm cursor-pointer transition-all"><i class="fa-solid fa-trash text-xs text-left"></i></button>
+                        </div>
+                    </div>`).join('')}</div></div>
+            `, 'products'),
+
+            admin_orders: () => window.views.adminLayout(`
+                <h2 class="text-2xl font-black mb-10 text-gray-900 uppercase tracking-tighter text-left">Megrendelések</h2>
+                <div class="space-y-4 text-left">${window.store.state.orders.map(o => `
+                    <div class="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6 transition-all hover:border-brand-500/30 text-left">
+                        <div class="flex-grow text-left"><div class="flex items-center gap-4 mb-3 text-left"><span class="font-black text-lg text-gray-900 text-left">${o.name}</span><span class="px-4 py-1.5 bg-brand-50 text-brand-500 text-[9px] font-black uppercase rounded-full tracking-[0.2em] shadow-sm text-left">${o.status}</span></div><div class="text-[11px] text-gray-400 font-bold uppercase tracking-widest leading-relaxed text-left">${o.address}</div><div class="text-xl font-black text-gray-900 mt-4 text-left">${o.total.toLocaleString()} Ft</div></div>
+                        <div class="flex gap-2 w-full md:w-auto text-left"><button onclick='window.openOrderEditForm(${JSON.stringify(o).replace(/'/g, "&#39;")})' class="flex-grow md:flex-none bg-brand-900 text-white text-[10px] font-black uppercase tracking-widest px-8 py-4 rounded-2xl hover:bg-black transition-all shadow-lg cursor-pointer">Módosítás</button><button onclick="window.deleteOrder('${o.id}')" class="p-4 text-gray-300 hover:text-red-500 transition-colors cursor-pointer"><i class="fa-solid fa-trash-can text-lg text-left"></i></button></div>
+                    </div>`).join('') || '<div class="text-center py-24 bg-surface-50 rounded-[3rem] border-4 border-dashed border-gray-100 text-gray-400 font-black uppercase tracking-widest text-left">Nincs adat</div>'}
+                </div>
+            `, 'orders'),
+
+            admin_settings: () => window.views.adminLayout(`
+                <h2 class="text-2xl font-black mb-10 text-gray-900 uppercase tracking-tighter text-left">Beállítások</h2>
+                <div class="bg-white p-10 rounded-[3rem] border border-gray-100 shadow-sm max-w-lg text-left"><form id="settings-form-cloud" class="space-y-8 text-left">
+                    <div class="text-left"><label class="text-[11px] font-black uppercase text-gray-400 mb-3 block tracking-widest text-left">Szalag üzenete</label><input name="bannerText" value="${window.store.state.settings.bannerText}" class="w-full bg-surface-50 border-none rounded-2xl px-6 py-4 text-sm outline-none focus:ring-2 focus:ring-brand-500/20 text-gray-900 font-bold text-left shadow-inner"></div>
+                    <div class="grid grid-cols-2 gap-6 text-left">
+                        <div class="text-left"><label class="text-[11px] font-black uppercase text-gray-400 mb-3 block tracking-widest text-left">Szalag színe</label><input type="color" name="bannerColor" value="${window.store.state.settings.bannerColor}" class="w-full h-14 border-none rounded-2xl cursor-pointer bg-surface-50 p-2 shadow-inner text-left"></div>
+                        <div class="text-left"><label class="text-[11px] font-black uppercase text-gray-400 mb-3 block tracking-widest text-left">Láthatóság</label><select name="bannerEnabled" class="w-full bg-surface-50 border-none rounded-2xl px-6 py-4 text-sm outline-none text-gray-900 font-black text-left"><option value="true" ${window.store.state.settings.bannerEnabled ? 'selected' : ''}>Látható</option><option value="false" ${!window.store.state.settings.bannerEnabled ? 'selected' : ''}>Rejtett</option></select></div>
+                    </div>
+                    <button type="submit" class="btn-cart-main text-xs uppercase tracking-[0.2em] mt-6 text-left cursor-pointer">Beállítások Mentése</button>
+                </form></div>
+            `, 'settings'),
+
+            adminLayout: (content, active) => `
+                <div class="max-w-7xl mx-auto animate-fade-in">
+                    ${window.renderBreadcrumbs()}
+                    <div class="flex flex-col md:flex-row gap-12 text-left">
+                        <div class="md:w-72 space-y-2 text-left"><div class="px-6 mb-12 text-left"><h2 class="text-3xl font-black tracking-tighter text-gray-900 text-left">Admin Hub</h2><p class="text-[10px] text-gray-400 font-black uppercase tracking-widest mt-1 opacity-60 text-left">TechArmor v6.5</p></div>
+                            <button onclick="router.navigate('admin_products')" class="w-full flex items-center gap-4 px-8 py-5 rounded-[1.75rem] text-xs font-black uppercase tracking-widest transition-all text-left cursor-pointer ${active === 'products' ? 'bg-brand-900 text-white shadow-2xl scale-105' : 'text-gray-400 hover:bg-surface-50'}"><i class="fa-solid fa-box-open text-lg"></i> Termékek</button>
+                            <button onclick="router.navigate('admin_orders')" class="w-full flex items-center gap-4 px-8 py-5 rounded-[1.75rem] text-xs font-black uppercase tracking-widest transition-all text-left cursor-pointer ${active === 'orders' ? 'bg-brand-900 text-white shadow-2xl scale-105' : 'text-gray-400 hover:bg-surface-50'}"><i class="fa-solid fa-receipt text-lg"></i> Rendelések</button>
+                            <button onclick="router.navigate('admin_settings')" class="w-full flex items-center gap-4 px-8 py-5 rounded-[1.75rem] text-xs font-black uppercase tracking-widest transition-all text-left cursor-pointer ${active === 'settings' ? 'bg-brand-900 text-white shadow-2xl scale-105' : 'text-gray-400 hover:bg-surface-50'}"><i class="fa-solid fa-sliders text-lg"></i> Beállítások</button>
+                            <div class="pt-12 px-8 border-t border-gray-100 mt-12 text-left"><button onclick="router.navigate('home')" class="text-[11px] font-black text-red-500 uppercase tracking-[0.3em] flex items-center gap-3 transition-all hover:gap-5 text-left cursor-pointer"><i class="fa-solid fa-arrow-left text-left"></i> Bolt nézet</button></div>
+                        </div><div class="flex-grow text-left">${content}</div>
+                    </div>
+                </div>
+            `,
+
+            success: (id) => `
+                <div class="text-center py-40 animate-fade-in"><div class="w-28 h-28 bg-green-500 text-white rounded-full flex items-center justify-center mx-auto mb-12 text-5xl shadow-[0_30px_60px_rgba(34,197,94,0.3)] animate-pop"><i class="fa-solid fa-check"></i></div>
+                    <h1 class="text-5xl font-black mb-8 tracking-tighter text-gray-900 text-center">Rendelés sikeres!</h1><p class="text-gray-500 text-lg mb-12 text-center text-center text-center">Azonosító: <span class="bg-surface-50 px-4 py-2 rounded-xl text-gray-900 font-black tracking-widest shadow-inner">#${id.substring(0, 8).toUpperCase()}</span></p><button onclick="router.navigate('home')" class="btn-cart-main mx-auto px-16 cursor-pointer">Főoldalra</button>
+                </div>
+            `,
+
+            checkout: () => `
+                <div class="max-w-xl mx-auto text-left py-10 animate-fade-in">
+                    ${window.renderBreadcrumbs()}
+                    <h1 class="text-4xl font-black mb-12 tracking-tight text-gray-900 text-center uppercase tracking-widest text-left">Pénztár</h1>
+                    <form id="order-form" class="space-y-6 bg-white p-10 rounded-[3rem] border border-gray-100 shadow-2xl text-left">
+                        <div class="text-left text-left"><label class="text-[10px] font-black uppercase text-gray-400 mb-3 block tracking-widest text-left text-left text-left">Vásárló Neve</label><input required name="name" placeholder="Példa Béla" class="w-full bg-surface-50 border-none rounded-2xl px-6 py-4 text-base outline-none focus:ring-2 focus:ring-brand-500/20 text-gray-900 font-bold text-left shadow-inner"></div>
+                        <div class="text-left text-left"><label class="text-[10px] font-black uppercase text-gray-400 mb-3 block tracking-widest text-left text-left text-left text-left">Email Cím</label><input required name="email" type="email" placeholder="pelda@email.com" class="w-full bg-surface-50 border-none rounded-2xl px-6 py-4 text-base outline-none focus:ring-2 focus:ring-brand-500/20 text-gray-900 font-bold text-left shadow-inner"></div>
+                        <div class="text-left text-left"><label class="text-[10px] font-black uppercase text-gray-400 mb-3 block tracking-widest text-left text-left text-left text-left">Szállítási Cím</label><input required name="address" placeholder="1234 Budapest, Példa utca 1." class="w-full bg-surface-50 border-none rounded-2xl px-6 py-4 text-base outline-none focus:ring-2 focus:ring-brand-500/20 text-gray-900 font-bold text-left shadow-inner"></div>
+                        <div class="pt-8 text-left text-left"><button type="submit" class="btn-design-large w-full py-6 text-xl uppercase tracking-widest text-left text-left cursor-pointer">Rendelés Leadása <i class="fa-solid fa-paper-plane ml-3"></i></button></div>
+                    </form>
+                </div>
+            `
+        };
+
+        window.router = { navigate: (path, p) => { window.location.hash = p ? `${path}/${p}` : path; window.renderView(true); } };
+
+        window.renderView = (shouldScroll = true) => {
+            const hash = window.location.hash.substring(1) || 'home';
+            const [view, param] = hash.split('/');
+            const renderFn = window.views[view] || window.views.home;
+            const content = document.getElementById('main-content');
+            if (content) {
+                content.innerHTML = renderFn(param);
+                if (shouldScroll) window.scrollTo(0, 0);
+            }
+        };
+
+        window.setCategory = (cat) => {
+            window.store.state.currentCategory = cat;
+            if (!window.location.hash || window.location.hash === '#home') {
+                const label = document.getElementById('cat-label');
+                if (label) label.innerText = cat === 'Mind' ? 'Minden Kategória' : cat;
+                document.querySelectorAll('.category-chip').forEach(c => c.classList.toggle('active', c.innerText === cat));
+                const grid = document.getElementById('catalog-grid');
+                if (grid) grid.innerHTML = window.getProductsGridHtml();
+            } else { window.router.navigate('home'); }
+        };
+
+        window.openModal = (content) => {
+            const modal = document.getElementById('app-modal');
+            const container = document.getElementById('modal-container');
+            if (container) container.innerHTML = content;
+            if (modal) modal.classList.remove('hidden');
+            document.body.classList.add('modal-open');
+        };
+
+        window.closeModal = () => {
+            const modal = document.getElementById('app-modal');
+            if (modal) modal.classList.add('hidden');
+            document.body.classList.remove('modal-open');
+        };
+
+        window.openProductForm = (p = null) => {
+            const imgs = p?.images ? p.images.join(', ') : (p?.image || '');
+            const formHtml = `
+                <div class="flex justify-between items-center mb-8 text-left text-left"><h3 class="text-2xl font-black text-gray-900 uppercase tracking-tighter text-left text-left">${p ? 'Szerkesztés' : 'Új Termék'}</h3><button onclick="window.closeModal()" class="text-gray-300 hover:text-black transition-colors cursor-pointer text-left text-left text-left"><i class="fa-solid fa-times text-2xl text-left text-left text-left"></i></button></div>
+                <form id="product-form" class="space-y-6 text-left text-left text-left">
+                    <input type="hidden" name="id" value="${p?.id || ''}">
+                    <div class="text-left text-left text-left"><label class="text-[10px] font-black uppercase text-gray-400 mb-3 block tracking-widest text-left text-left text-left text-left">Megnevezés</label><input required name="name" value="${p?.name || ''}" class="w-full bg-surface-50 border-none rounded-2xl px-6 py-4 text-sm outline-none focus:ring-2 focus:ring-brand-500/20 text-gray-900 font-bold shadow-inner text-left text-left text-left text-left"></div>
+                    <div class="grid grid-cols-2 gap-6 text-left text-left text-left">
+                        <div class="text-left text-left text-left text-left"><label class="text-[10px] font-black uppercase text-gray-400 mb-3 block tracking-widest text-left text-left text-left text-left text-left">Alapár</label><input required type="number" name="price" value="${p?.price || ''}" class="w-full bg-surface-50 border-none rounded-2xl px-6 py-4 text-sm outline-none text-gray-900 font-bold text-left text-left text-left text-left text-left"></div>
+                        <div class="text-left text-left text-left text-left"><label class="text-[10px] font-black uppercase text-gray-400 mb-3 block tracking-widest text-left text-left text-left text-left text-left text-left">Akciós ár</label><input type="number" name="salePrice" value="${p?.salePrice || ''}" class="w-full bg-surface-50 border-none rounded-2xl px-6 py-4 text-sm outline-none text-gray-900 font-bold text-left text-left text-left text-left text-left text-left"></div>
+                    </div>
+                    <div class="text-left text-left text-left text-left"><label class="text-[10px] font-black uppercase text-gray-400 mb-3 block tracking-widest text-left text-left text-left text-left text-left text-left text-left">Kategória</label><select name="category" class="w-full bg-surface-50 border-none rounded-2xl px-6 py-4 text-sm outline-none text-gray-900 font-black text-left text-left text-left text-left text-left text-left text-left shadow-inner"><option ${p?.category === 'Fóliák' ? 'selected' : ''}>Fóliák</option><option ${p?.category === 'Tokok' ? 'selected' : ''}>Tokok</option><option ${p?.category === 'Kamera védők' ? 'selected' : ''}>Kamera védők</option></select></div>
+                    <div class="text-left text-left text-left text-left"><label class="text-[10px] font-black uppercase text-brand-500 mb-3 block tracking-widest text-left text-left text-left text-left text-left text-left text-left text-left">Galéria Képek (Vesszővel választva)</label><textarea required name="images" rows="3" class="w-full bg-surface-50 border-none rounded-2xl px-6 py-4 text-xs outline-none focus:ring-2 focus:ring-brand-500/20 text-gray-900 text-left text-left text-left text-left shadow-inner">${imgs}</textarea></div>
+                    <div class="text-left text-left text-left text-left"><label class="text-[10px] font-black uppercase text-gray-400 mb-3 block tracking-widest text-left text-left text-left text-left text-left text-left text-left text-left text-left">Leírás</label><textarea name="description" rows="3" class="w-full bg-surface-50 border-none rounded-2xl px-6 py-4 text-xs outline-none focus:ring-2 focus:ring-brand-500/20 text-gray-900 font-medium text-left text-left text-left text-left shadow-inner">${p?.description || ''}</textarea></div>
+                    <button type="submit" class="btn-design-large py-5 text-sm uppercase tracking-[0.3em] mt-6 text-left text-left text-left text-left text-left cursor-pointer">Mentés Alkalmazása</button>
+                </form>`;
+            window.openModal(formHtml);
+        };
+
+        window.openOrderEditForm = (o) => {
+            const formHtml = `
+                <div class="flex justify-between items-center mb-8 text-left"><h3 class="text-2xl font-black text-gray-900 uppercase tracking-tighter text-left">Rendelés Módosítása</h3><button onclick="window.closeModal()" class="text-gray-300 hover:text-black transition-colors cursor-pointer text-left"><i class="fa-solid fa-times text-2xl text-left"></i></button></div>
+                <form id="order-edit-form" class="space-y-6 text-left">
+                    <input type="hidden" name="id" value="${o.id}">
+                    <div class="bg-brand-50 p-6 rounded-3xl border border-brand-100 mb-8 text-left"><div class="text-[10px] font-black uppercase text-brand-500 mb-2 tracking-widest text-left">Fizetendő összeg</div><div class="text-3xl font-black text-gray-900 text-left">${o.total.toLocaleString()} Ft</div></div>
+                    <div class="text-left"><label class="text-[10px] font-black uppercase text-gray-400 mb-3 block tracking-widest text-left">Vásárló Neve</label><input required name="name" value="${o.name}" class="w-full bg-surface-50 border-none rounded-2xl px-6 py-4 text-sm outline-none focus:ring-2 focus:ring-brand-500/20 text-gray-900 font-bold shadow-inner text-left"></div>
+                    <div class="text-left"><label class="text-[10px] font-black uppercase text-gray-400 mb-3 block tracking-widest text-left text-left">Cím</label><textarea required name="address" rows="2" class="w-full bg-surface-50 border-none rounded-2xl px-6 py-4 text-sm outline-none focus:ring-2 focus:ring-brand-500/20 text-gray-900 font-bold shadow-inner text-left">${o.address}</textarea></div>
+                    <div class="text-left"><label class="text-[10px] font-black uppercase text-gray-400 mb-3 block tracking-widest text-left text-left text-left">Státusz</label><select name="status" class="w-full bg-surface-50 border-none rounded-2xl px-6 py-4 text-sm outline-none text-gray-900 font-black text-left shadow-inner"><option value="Új rendelés" ${o.status === 'Új rendelés' ? 'selected' : ''}>Új rendelés</option><option value="Feldolgozás alatt" ${o.status === 'Feldolgozás alatt' ? 'selected' : ''}>Feldolgozás alatt</option><option value="Kiszállítás alatt" ${o.status === 'Kiszállítás alatt' ? 'selected' : ''}>Kiszállítás alatt</option><option value="Kiszállítva" ${o.status === 'Kiszállítva' ? 'selected' : ''}>Kiszállítva</option></select></div>
+                    <button type="submit" class="btn-design-large py-5 text-sm uppercase tracking-[0.3em] mt-6 text-left cursor-pointer">Frissítés</button>
+                </form>`;
+            window.openModal(formHtml);
+        };
+
+        window.deleteProduct = async (i) => { if (confirm("Törlöd?")) { await backend.delete('products', i); await window.store.loadData(); window.renderView(false); window.showToast("Sikeresen törölve."); } };
+        window.deleteOrder = async (i) => { if (confirm("Biztosan törlöd a rendelést?")) { await backend.delete('orders', i); await window.store.loadData(); window.renderView(false); window.showToast("Rendelés eltávolítva."); } };
+
+        window.updateQty = (i, d) => { window.store.state.cart[i].qty += d; if (window.store.state.cart[i].qty < 1) window.store.state.cart.splice(i, 1); window.store.saveCart(); window.renderView(false); };
+        window.removeFromCart = (i) => { window.store.state.cart.splice(i, 1); window.store.saveCart(); window.renderView(false); };
+
+        let bubbleTimer;
+        window.expandFloatingCart = (p) => {
+            const bubble = document.getElementById('floating-cart-bubble');
+            const bgImg = document.getElementById('bubble-bg-img');
+            const preview = document.getElementById('bubble-preview');
+            const thumb = document.getElementById('bubble-prod-thumb');
+            const name = document.getElementById('bubble-prod-name');
+            const ui = document.getElementById('bubble-ui');
+
+            clearTimeout(bubbleTimer);
+            const img = p.images?.[0] || p.image;
+            if (bgImg) { bgImg.src = img; bgImg.style.opacity = '1'; }
+            if (thumb) thumb.src = img;
+            if (name) name.innerText = p.name;
+
+            bubble.classList.remove('hidden');
+            bubble.classList.add('bubble-expanded');
+            ui.classList.add('hidden');
+            preview.classList.remove('hidden');
+
+            bubbleTimer = setTimeout(() => {
+                bubble.classList.remove('bubble-expanded');
+                preview.classList.add('hidden');
+                ui.classList.remove('hidden');
+                if (bgImg) bgImg.style.opacity = '0.4';
+            }, 3500);
+        };
+
+        window.showToast = (msg) => {
+            const t = document.createElement('div');
+            t.className = "bg-brand-900 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 animate-slide-up text-[10px] font-black uppercase tracking-widest border border-white/10 pointer-events-auto text-left";
+            t.innerHTML = `<i class="fa-solid fa-check-circle text-green-500 text-sm text-left"></i> ${msg}`;
+            document.getElementById('toast-container').appendChild(t);
+            setTimeout(() => { t.classList.add('opacity-0'); setTimeout(() => t.remove(), 500); }, 3000);
+        };
+
+        window.addEventListener('hashchange', () => { window.renderView(true); window.closeModal(); });
+
+        document.getElementById('global-search')?.addEventListener('input', (e) => {
+            window.store.state.searchQuery = e.target.value;
+            const grid = document.getElementById('catalog-grid');
+            if (grid) grid.innerHTML = window.getProductsGridHtml();
+        });
+
+        document.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (e.target.id === 'order-form') {
+                const fd = new FormData(e.target);
+                const total = window.store.state.cart.reduce((a, b) => a + (b.price * b.qty), 0);
+                const orderId = await backend.save('orders', { ...Object.fromEntries(fd.entries()), total, status: 'Új rendelés', date: new Date().toISOString() });
+                window.store.state.cart = []; window.store.saveCart();
+                window.router.navigate('success', orderId);
+            }
+            if (e.target.id === 'product-form') {
+                const fd = new FormData(e.target);
+                const imgs = fd.get('images').split(',').map(s => s.trim()).filter(s => s !== "");
+                await backend.save('products', {
+                    id: fd.get('id') || undefined,
+                    name: fd.get('name'),
+                    price: Number(fd.get('price')),
+                    category: fd.get('category'),
+                    images: imgs,
+                    image: imgs[0] || "",
+                    salePrice: fd.get('salePrice') ? Number(fd.get('salePrice')) : null,
+                    description: fd.get('description')
+                });
+                await window.store.loadData(); window.closeModal(); window.renderView(false); window.showToast("Adatok sikeresen mentve!");
+            }
+            if (e.target.id === 'order-edit-form') {
+                const fd = new FormData(e.target);
+                const orderId = fd.get('id');
+                const order = window.store.state.orders.find(x => x.id === orderId);
+                if (order) {
+                    order.name = fd.get('name');
+                    order.address = fd.get('address');
+                    order.status = fd.get('status');
+                    await backend.save('orders', order);
+                    await window.store.loadData(); window.closeModal(); window.renderView(false); window.showToast("Megrendelés frissítve!");
+                }
+            }
+            if (e.target.id === 'settings-form-cloud') {
+                const fd = new FormData(e.target);
+                const data = {
+                    bannerText: fd.get('bannerText'),
+                    bannerColor: fd.get('bannerColor'),
+                    bannerEnabled: fd.get('bannerEnabled') === 'true'
+                };
+                window.store.state.settings = data;
+                await backend.saveSettings(data);
+                window.store.applySettings(); window.showToast("Beállítások felhőbe mentve!");
+            }
+        });
+
+        window.store.init();
+    </script>
+</body>
+
+</html>

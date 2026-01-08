@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="hu" class="scroll-smooth">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TechArmor | Prémium Készülékvédelem</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-effect {
+                background: rgba(255, 255, 255, 0.85);
+                backdrop-filter: blur(20px);
+                -webkit-backdrop-filter: blur(20px);
+            }
+            .hide-scrollbar::-webkit-scrollbar { display: none; }
+            .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        }
+
+        @layer components {
+            .btn-primary {
+                @apply bg-brand-500 text-white font-bold rounded-full px-6 py-2 hover:bg-brand-600 transition-all active:scale-95 shadow-lg shadow-brand-500/20 flex items-center justify-center gap-2;
+            }
+            .btn-design-large {
+                @apply relative overflow-hidden bg-brand-900 text-white font-extrabold rounded-2xl px-10 py-5 transition-all duration-300 shadow-2xl hover:bg-black hover:-translate-y-1 active:scale-95 flex items-center justify-center gap-4 text-lg w-full sm:w-auto cursor-pointer;
+            }
+            .btn-design-square {
+                @apply w-20 h-20 rounded-2xl border-2 border-gray-100 bg-white flex items-center justify-center transition-all duration-300 hover:border-brand-500 hover:bg-brand-50 text-brand-900 active:scale-90 cursor-pointer shadow-sm;
+            }
+            .category-chip {
+                @apply px-4 py-1.5 rounded-full text-[11px] font-black transition-all whitespace-nowrap border border-gray-100 uppercase tracking-widest;
+            }
+            .category-chip.active {
+                @apply bg-brand-500 text-white border-brand-500 shadow-lg scale-105;
+            }
+            .category-chip:not(.active) {
+                @apply bg-surface-50 text-gray-400 hover:bg-surface-100;
+            }
+            .thumb-gallery-item {
+                @apply w-20 h-20 rounded-xl object-cover cursor-pointer border-2 border-transparent transition-all opacity-70 hover:opacity-100;
+            }
+            .thumb-gallery-item.active {
+                @apply border-brand-500 ring-4 ring-brand-500/10 scale-105 opacity-100;
+            }
+            .breadcrumb-item:not(:last-child)::after {
+                @apply mx-3 text-gray-300 text-sm;
+                content: '\f105'; font-family: 'Font Awesome 6 Free'; font-weight: 900;
+            }
+            
+            /* Lightbox */
+            #lightbox {
+                @apply fixed inset-0 z-[2000] bg-black/95 hidden flex items-center justify-center opacity-0 transition-opacity duration-300;
+            }
+            #lightbox.open { @apply opacity-100; }
+            #lightbox img {
+                max-height: 85vh; max-width: 90vw;
+                @apply object-contain select-none shadow-2xl rounded-lg pointer-events-auto;
+            }
+            .lightbox-btn {
+                @apply absolute p-4 text-white hover:text-brand-500 transition-colors cursor-pointer z-[2010] bg-black/20 hover:bg-black/50 rounded-full w-12 h-12 flex items-center justify-center backdrop-blur-sm;
+            }
+        }
+        
+        body { background-color: #ffffff; color: #1d1d1f; }
+        body.modal-open { overflow: hidden; }
+        .product-card:hover img { transform: scale(1.05); }
+        #floating-cart-bubble { transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
+        .bubble-expanded { width: 280px !important; border-radius: 20px !important; }
+        .progress-bar-inner { transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.5s ease; }
+    </style>
+
+    <script>
+        window.tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'] },
+                    colors: {
+                        brand: {
+                            50: '#f0f7ff',
+                            100: '#e0effe',
+                            500: '#0071e3',
+                            600: '#005bb5',
+                            700: '#004487',
+                            800: '#1d1d1f',
+                            900: '#0a0a0b',
+                        },
+                        surface: {
+                            50: '#f5f5f7',
+                            100: '#e8e8ed',
+                            200: '#d2d2d7',
+                        }
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.3s ease-out forwards',
+                        'slide-up': 'slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                        'pop': 'pop 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards',
+                    },
+                    keyframes: {
+                        fadeIn: { from: { opacity: 0 }, to: { opacity: 1 } },
+                        slideUp: { from: { transform: 'translateY(15px)', opacity: 0 }, to: { transform: 'translateY(0)', opacity: 1 } },
+                        pop: { '0%': { transform: 'scale(0.5)', opacity: 0 }, '100%': { transform: 'scale(1)', opacity: 1 } },
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="font-sans antialiased overflow-x-hidden">
+
+    <!-- Top Promo Bar -->
+    <div id="top-info-bar"
+        class="hidden text-white text-[10px] py-1.5 text-center font-bold uppercase tracking-[0.2em] z-[60] relative transition-all duration-500">
+        <span id="top-info-text">Ingyenes szállítás 15.000 Ft felett!</span>
+    </div>
+
+    <!-- DB Status Bar -->
+    <div id="status-bar"
+        class="hidden text-white text-[9px] py-1 text-center font-bold uppercase tracking-widest z-[60] relative transition-colors duration-500">
+        <span id="status-text">Kezelés alatt...</span>
+    </div>
+
+    <!-- Loader -->
+    <div id="app-loader"
+        class="fixed inset-0 z-[100] bg-white flex flex-col items-center justify-center transition-opacity duration-500">
+        <div class="w-10 h-10 border-4 border-brand-100 border-t-brand-500 rounded-full animate-spin mb-4"></div>
+        <div class="text-sm font-black uppercase tracking-widest text-gray-400">Tech<span
+                class="text-brand-500">Armor</span> indítása...</div>
+    </div>
+
+    <!-- Header Navigation -->
+    <nav class="sticky top-0 z-50 glass-effect border-b border-gray-100">
+        <div class="container mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-2 cursor-pointer group" onclick="window.router.navigate('home')">
+                <div
+                    class="bg-brand-500 text-white w-8 h-8 rounded-lg flex items-center justify-center group-hover:rotate-12 transition-transform shadow-md">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+                <span class="text-xl font-black tracking-tighter text-gray-900 uppercase">TechArmor</span>
+            </div>
+
+            <div class="flex items-center gap-2 sm:gap-4">
+                <div class="relative group hidden sm:block">
+                    <input type="text" id="global-search" placeholder="Keresés..."
+                        class="bg-surface-50 border-none rounded-full pl-9 pr-4 py-1.5 text-xs w-32 focus:w-48 transition-all outline-none focus:ring-2 focus:ring-brand-500/20">
+                    <i
+                        class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-[10px]"></i>
+                </div>
+
+                <button onclick="window.router.navigate('wishlist')"
+                    class="relative p-2 text-gray-500 hover:text-brand-500 transition-colors cursor-pointer">
+                    <i class="fa-regular fa-heart text-lg"></i>
+                    <span id="wishlist-badge"
+                        class="absolute top-1 right-1 bg-red-500 text-white text-[8px] min-w-[14px] h-3.5 rounded-full flex items-center justify-center hidden border border-white font-bold">0</span>
+                </button>
+
+                <button onclick="window.router.navigate('cart')"
+                    class="relative p-2 text-gray-500 hover:text-brand-500 transition-colors cursor-pointer">
+                    <i class="fa-solid fa-bag-shopping text-lg"></i>
+                    <span id="cart-badge"
+                        class="absolute top-1 right-1 bg-brand-500 text-white text-[8px] min-w-[14px] h-3.5 rounded-full flex items-center justify-center hidden border border-white font-bold">0</span>
+                </button>
+
+                <div class="w-px h-6 bg-gray-100 mx-1"></div>
+
+                <div id="auth-buttons" class="flex items-center gap-2">
+                    <button id="admin-btn" class="hidden text-gray-400 hover:text-brand-900 p-2 cursor-pointer"
+                        onclick="window.router.navigate('admin_products')">
+                        <i class="fa-solid fa-user-shield"></i>
+                    </button>
+                    <button id="login-btn" class="text-gray-400 hover:text-brand-900 p-2 cursor-pointer"
+                        onclick="window.router.navigate('login')">
+                        <i class="fa-solid fa-right-to-bracket"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main id="main-content" class="min-h-[75vh] container mx-auto px-4 py-8">
+    </main>
+
+    <!-- Floating Bubble Cart -->
+    <div id="floating-cart-bubble" onclick="window.router.navigate('cart')"
+        class="fixed bottom-6 right-6 z-[100] w-14 h-14 bg-brand-900 text-white rounded-full shadow-2xl flex items-center justify-center cursor-pointer hidden overflow-hidden border-2 border-white group">
+        <img id="bubble-bg-img" src=""
+            class="absolute inset-0 w-full h-full object-cover opacity-40 transition-opacity">
+        <div id="bubble-ui" class="relative z-10 flex items-center justify-center w-full h-full">
+            <i class="fa-solid fa-cart-shopping text-lg"></i>
+            <span id="bubble-count"
+                class="absolute -top-1 -right-1 bg-brand-500 text-white text-[9px] w-5 h-5 rounded-full flex items-center justify-center font-bold">0</span>
+        </div>
+        <div id="bubble-preview" class="hidden absolute left-0 w-full px-4 py-3 bg-brand-900">
+            <div class="flex items-center gap-3 text-left">
+                <img id="bubble-prod-thumb" src="" class="w-10 h-10 rounded-lg object-cover bg-white/10">
+                <div class="overflow-hidden">
+                    <div class="text-[9px] text-brand-500 font-black uppercase mb-0.5">Sikeresen hozzáadva!</div>
+                    <div id="bubble-prod-name" class="text-[10px] font-bold truncate text-white">Termék</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-brand-800 text-white pt-20 pb-12 mt-24 border-t border-white/5">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-20 text-left">
+                <div>
+                    <div class="flex items-center gap-2 mb-8">
+                        <div
+                            class="bg-brand-500 text-white w-7 h-7 rounded-lg flex items-center justify-center text-xs shadow-lg">
+                            <i class="fa-solid fa-shield-halved"></i>
+                        </div>
+                        <span class="text-2xl font-black tracking-tighter uppercase">TechArmor</span>
+                    </div>
+                    <p class="text-gray-400 text-sm leading-relaxed mb-8 max-w-xs">
+                        A készüléked megérdemli a prémium védelmet. Devia alapú technológiával és kiváló minőségű
+                        anyagokkal dolgozunk.
+                    </p>
+                    <div class="flex gap-4">
+                        <a href="#"
+                            class="w-11 h-11 rounded-xl bg-white/5 flex items-center justify-center hover:bg-brand-500 hover:text-white transition-all"><i
+                                class="fa-brands fa-facebook-f text-lg"></i></a>
+                        <a href="#"
+                            class="w-11 h-11 rounded-xl bg-white/5 flex items-center justify-center hover:bg-brand-500 hover:text-white transition-all"><i
+                                class="fa-brands fa-instagram text-lg"></i></a>
+                        <a href="#"
+                            class="w-11 h-11 rounded-xl bg-white/5 flex items-center justify-center hover:bg-brand-500 hover:text-white transition-all"><i
+                                class="fa-brands fa-tiktok text-lg"></i></a>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="text-[10px] font-black uppercase tracking-[0.2em] mb-10 text-brand-500">Termékeink</h4>
+                    <ul class="space-y-5 text-sm text-gray-400 font-medium">
+                        <li><button onclick="window.setCategory('Tokok')"
+                                class="hover:text-white transition-colors cursor-pointer">Telefontokok</button></li>
+                        <li><button onclick="window.setCategory('Fóliák')"
+                                class="hover:text-white transition-colors cursor-pointer">Üvegfóliák</button></li>
+                        <li><button onclick="window.setCategory('Kamera védők')"
+                                class="hover:text-white transition-colors cursor-pointer">Kamera védők</button></li>
+                        <li><button onclick="window.setCategory('Mind')"
+                                class="hover:text-white transition-colors cursor-pointer">Minden Termék</button></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-[10px] font-black uppercase tracking-[0.2em] mb-10 text-brand-500">Információk</h4>
+                    <ul class="space-y-5 text-sm text-gray-400 font-medium">
+                        <li><a href="#" class="hover:text-white transition-colors">Házhozszállítás</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Garanciális feltételek</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Adatkezelési nyilatkozat</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Vásárlási ÁSZF</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-[10px] font-black uppercase tracking-[0.2em] mb-10 text-brand-500">Kapcsolat</h4>
+                    <ul class="space-y-5 text-sm text-gray-400 font-medium">
+                        <li class="flex items-start gap-4"><i
+                                class="fa-solid fa-location-dot mt-1 text-brand-500 text-lg"></i> 1051 Budapest,
+                            Erzsébet tér 1.</li>
+                        <li class="flex items-center gap-4"><i class="fa-solid fa-phone text-brand-500 text-lg"></i> +36
+                            30 123 4567</li>
+                        <li class="flex items-center gap-4"><i class="fa-solid fa-envelope text-brand-500 text-lg"></i>
+                            support@techarmor.hu</li>
+                    </ul>
+                </div>
+            </div>
+            <div
+                class="pt-10 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6 opacity-40">
+                <p class="text-[10px] text-gray-500 font-black uppercase tracking-widest">© 2026 TechArmor Pro. All
+                    rights reserved.</p>
+                <div class="flex gap-6 text-2xl">
+                    <i class="fa-brands fa-cc-visa"></i>
+                    <i class="fa-brands fa-cc-mastercard"></i>
+                    <i class="fa-brands fa-apple-pay"></i>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Universal Modal Container -->
+    <div id="app-modal"
+        class="fixed inset-0 z-[1000] hidden flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-fade-in">
+        <div class="bg-white rounded-[2.5rem] w-full max-w-2xl overflow-hidden shadow-2xl" id="modal-wrapper">
+            <div id="modal-container" class="max-h-[85vh] overflow-y-auto p-10 hide-scrollbar"></div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="fixed top-6 right-6 z-[3000] flex flex-col gap-4 pointer-events-none"></div>
+
+    <!-- Lightbox -->
+    <div id="lightbox">
+        <button class="lightbox-btn top-4 right-4" onclick="window.closeLightbox()"><i
+                class="fa-solid fa-times text-xl"></i></button>
+        <button class="lightbox-btn left-4" onclick="window.changeLightboxImage(-1)"><i
+                class="fa-solid fa-chevron-left text-xl"></i></button>
+        <button class="lightbox-btn right-4" onclick="window.changeLightboxImage(1)"><i
+                class="fa-solid fa-chevron-right text-xl"></i></button>
+        <img id="lightbox-img" src="">
+    </div>
+
+    <!-- App Logic -->
+    <script type="module" src="src/js/app.js"></script>
+</body>
+
+</html>
