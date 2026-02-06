@@ -1,5 +1,5 @@
 import { TechBackend, auth } from './firebase.js';
-import { signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "firebase/auth";
 
 const backend = new TechBackend();
 

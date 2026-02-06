@@ -316,8 +316,7 @@ export const renderView = (shouldScroll = true) => {
 
     // Auth Guard
     if (view.startsWith('admin')) {
-        const isMockAdmin = localStorage.getItem('mock_admin_auth') === 'true';
-        if (!isMockAdmin && (!auth.currentUser || auth.currentUser.isAnonymous)) {
+        if (!auth.currentUser || auth.currentUser.isAnonymous) {
             console.log("Unauthorized access to admin, redirecting...");
             router.navigate('login');
             return;

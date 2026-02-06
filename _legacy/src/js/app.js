@@ -1,8 +1,9 @@
+import '../style.css';
 import { store } from './store.js';
 import { router } from './router.js';
 import { renderView } from './views.js';
 import { db, auth, TechBackend } from './firebase.js';
-import { signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { signInWithEmailAndPassword } from "firebase/auth";
 
 const backend = new TechBackend();
 
@@ -25,14 +26,6 @@ document.addEventListener('submit', async (e) => {
         const fd = new FormData(e.target);
         const email = fd.get('email');
         const password = fd.get('password');
-
-        // Admin Shortcut for Testing
-        if (email === 'admin@techarmor.hu' && password === 'admin123') {
-            localStorage.setItem('mock_admin_auth', 'true');
-            window.router.navigate('admin/dashboard');
-            window.showToast("Demo Admin belépés sikeres!");
-            return;
-        }
 
         try {
             await signInWithEmailAndPassword(auth, email, password);

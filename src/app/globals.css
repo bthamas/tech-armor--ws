@@ -1,0 +1,160 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-plus-jakarta), sans-serif;
+
+  --color-brand-50: #f0f7ff;
+  --color-brand-100: #e0effe;
+  --color-brand-500: #0071e3;
+  --color-brand-600: #005bb5;
+  --color-brand-700: #004487;
+  --color-brand-800: #1d1d1f;
+  --color-brand-900: #0a0a0b;
+
+  --color-surface-50: #f5f5f7;
+  --color-surface-100: #e8e8ed;
+  --color-surface-200: #d2d2d7;
+
+  --animate-fade-in: fadeIn 0.3s ease-out forwards;
+  --animate-slide-up: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  --animate-pop: pop 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideUp {
+    from {
+      transform: translateY(15px);
+      opacity: 0;
+    }
+
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes pop {
+    0% {
+      transform: scale(0.5);
+      opacity: 0;
+    }
+
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+}
+
+/* Custom Utilities */
+
+@utility glass-effect {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+@layer utilities {
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-brand-500 text-white font-bold rounded-full px-6 py-2 hover:bg-brand-600 transition-all active:scale-95 shadow-lg shadow-brand-500/20 flex items-center justify-center gap-2;
+  }
+
+  .btn-design-large {
+    @apply relative overflow-hidden bg-brand-900 text-white font-extrabold rounded-2xl px-10 py-5 transition-all duration-300 shadow-2xl hover:bg-black hover:-translate-y-1 active:scale-95 flex items-center justify-center gap-4 text-lg w-full sm:w-auto cursor-pointer;
+  }
+
+  .btn-design-square {
+    @apply w-20 h-20 rounded-2xl border-2 border-gray-100 bg-white flex items-center justify-center transition-all duration-300 hover:border-brand-500 hover:bg-brand-50 text-brand-900 active:scale-90 cursor-pointer shadow-sm;
+  }
+
+  .category-chip {
+    @apply px-4 py-1.5 rounded-full text-[11px] font-black transition-all whitespace-nowrap border border-gray-100 uppercase tracking-widest;
+  }
+
+  .category-chip.active {
+    @apply bg-brand-500 text-white border-brand-500 shadow-lg scale-105;
+  }
+
+  .category-chip:not(.active) {
+    @apply bg-surface-50 text-gray-400 hover:bg-surface-100;
+  }
+
+  .thumb-gallery-item {
+    @apply w-20 h-20 rounded-xl object-cover cursor-pointer border-2 border-transparent transition-all opacity-70 hover:opacity-100;
+  }
+
+  .thumb-gallery-item.active {
+    @apply border-brand-500 ring-4 ring-brand-500/10 scale-105 opacity-100;
+  }
+
+  .breadcrumb-item:not(:last-child)::after {
+    @apply mx-3 text-gray-300 text-sm;
+    content: '\f105';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+  }
+
+  /* Lightbox */
+  #lightbox {
+    @apply fixed inset-0 z-[2000] bg-black/95 hidden flex items-center justify-center opacity-0 transition-opacity duration-300;
+  }
+
+  #lightbox.open {
+    @apply opacity-100;
+  }
+
+  #lightbox img {
+    max-height: 85vh;
+    max-width: 90vw;
+    @apply object-contain select-none shadow-2xl rounded-lg pointer-events-auto;
+  }
+
+  .lightbox-btn {
+    @apply absolute p-4 text-white hover:text-brand-500 transition-colors cursor-pointer z-[2010] bg-black/20 hover:bg-black/50 rounded-full w-12 h-12 flex items-center justify-center backdrop-blur-sm;
+  }
+}
+
+body {
+  background-color: #ffffff;
+  color: #1d1d1f;
+}
+
+body.modal-open {
+  overflow: hidden;
+}
+
+.product-card:hover img {
+  transform: scale(1.05);
+}
+
+#floating-cart-bubble {
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.bubble-expanded {
+  width: 280px !important;
+  border-radius: 20px !important;
+}
+
+.progress-bar-inner {
+  transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.5s ease;
+}
