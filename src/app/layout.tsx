@@ -3,6 +3,7 @@ import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 
 import { Providers } from "@/components/Providers";
+import FloatingCart from "@/components/FloatingCart";
 
 const plusJakartaStatus = Plus_Jakarta_Sans({
   variable: "--font-plus-jakarta",
@@ -30,6 +31,7 @@ export default function RootLayout({
       >
         <Providers>
           {children}
+          <FloatingCart />
         </Providers>
       </body>
     </html>

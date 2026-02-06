@@ -14,6 +14,10 @@ interface ShopContextType extends ShopState {
     setCategory: (category: string) => void;
     setSearchQuery: (query: string) => void;
     loading: boolean;
+    lastAddedItem: { product: Product, ts: number } | null;
+    addProduct: (product: Product) => void;
+    updateProduct: (product: Product) => void;
+    deleteProduct: (id: string) => void;
 }
 
 const ShopContext = createContext<ShopContextType | undefined>(undefined);
@@ -27,6 +31,7 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
     const [currentCategory, setCurrentCategory] = useState('Mind');
     const [demoMode, setDemoMode] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [lastAddedItem, setLastAddedItem] = useState<{ product: Product, ts: number } | null>(null);
     const [settings] = useState({
         bannerEnabled: true,
         bannerText: "Ingyenes szállítás 15.000 Ft felett!",
@@ -103,6 +108,7 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
             localStorage.setItem('ta_cart', JSON.stringify(newCart));
             return newCart;
         });
+        setLastAddedItem({ product, ts: Date.now() });
     };
 
     const removeFromCart = (id: string) => {
@@ -115,7 +121,7 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
 
     const updateQty = (id: string, qty: number) => {
         setCart(prev => {
-            if (qty <= 0) return prev.filter(p => p.id !== id);
+            if (qty < 1) return prev; // PREVENT QTY < 1
             const newCart = prev.map(p => p.id === id ? { ...p, qty } : p);
             localStorage.setItem('ta_cart', JSON.stringify(newCart));
             return newCart;
@@ -132,10 +138,31 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
 
     const setCategory = (c: string) => setCurrentCategory(c);
 
+    // Admin Actions
+    const addProduct = (product: Product) => {
+        setProducts(prev => {
+            const newP = [...prev, product];
+            // In real app: await addDoc(collection(db, ...), product);
+            return newP;
+        });
+    };
+
+    const updateProduct = (product: Product) => {
+        setProducts(prev => {
+            const newP = prev.map(p => p.id === product.id ? product : p);
+            return newP;
+        });
+    };
+
+    const deleteProduct = (id: string) => {
+        setProducts(prev => prev.filter(p => p.id !== id));
+    };
+
     return (
         <ShopContext.Provider value={{
-            products, cart, wishlist, orders, searchQuery, currentCategory, demoMode, settings,
-            addToCart, removeFromCart, updateQty, toggleWishlist, setCategory, setSearchQuery, loading
+            products, cart, wishlist, orders, searchQuery, currentCategory, demoMode, settings, lastAddedItem,
+            addToCart, removeFromCart, updateQty, toggleWishlist, setCategory, setSearchQuery, loading,
+            addProduct, updateProduct, deleteProduct
         }}>
             {children}
         </ShopContext.Provider>

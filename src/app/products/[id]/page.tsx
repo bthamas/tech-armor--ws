@@ -13,7 +13,7 @@ interface Props {
 export async function generateMetadata(
     { params }: Props
 ): Promise<Metadata> {
-    const id = params.id;
+    const { id } = await params;
     const product = mockProducts.find(p => p.id === id);
 
     if (!product) {
@@ -39,8 +39,8 @@ export async function generateStaticParams() {
 }
 
 // Server Component
-export default function ProductPage({ params }: Props) {
-    const id = params.id;
+export default async function ProductPage({ params }: Props) {
+    const { id } = await params;
     const product = mockProducts.find(p => p.id === id);
 
     if (!product) {

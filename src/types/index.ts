@@ -21,6 +21,7 @@ export interface Order {
     total: number;
     status: string;
     date: string;
+    email?: string; // Added for Admin/Customer tracking
     items: { name: string; qty: number; price: number }[];
 }
 
