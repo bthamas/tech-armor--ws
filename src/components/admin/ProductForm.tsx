@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { Product } from '@/types';
+import { useShop } from '@/context/ShopContext';
 import Link from 'next/link';
 
 interface ProductFormProps {
@@ -10,6 +11,7 @@ interface ProductFormProps {
 }
 
 export default function ProductForm({ initialData, onSubmit, title }: ProductFormProps) {
+    const { categories } = useShop();
     const [formData, setFormData] = useState<Product>({
         id: '',
         name: '',
@@ -77,10 +79,9 @@ export default function ProductForm({ initialData, onSubmit, title }: ProductFor
                                 onChange={handleChange}
                                 className="w-full bg-surface-50 border-none rounded-2xl px-6 py-4 text-sm outline-none font-bold shadow-inner cursor-pointer"
                             >
-                                <option>Tokok</option>
-                                <option>Fóliák</option>
-                                <option>Kamera védők</option>
-                                <option>Kiegészítők</option>
+                                {categories.map((cat, i) => (
+                                    <option key={i} value={cat}>{cat}</option>
+                                ))}
                             </select>
                         </div>
                     </div>
