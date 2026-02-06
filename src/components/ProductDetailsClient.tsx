@@ -4,6 +4,7 @@ import { Product } from '@/types';
 import { useShop } from '@/context/ShopContext';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import Link from 'next/link';
 
 export default function ProductDetailsClient({ product: initialProduct }: { product: Product }) {
     const { addToCart, toggleWishlist, wishlist, products } = useShop();
@@ -27,6 +28,12 @@ export default function ProductDetailsClient({ product: initialProduct }: { prod
             <Navbar />
 
             <main className="pt-32 pb-20 px-6 max-w-7xl mx-auto">
+                <div className="flex items-center gap-2 text-sm text-gray-400 mb-8 font-medium">
+                    <Link href="/" className="hover:text-brand-500">Kezdőlap</Link>
+                    <i className="fa-solid fa-chevron-right text-xs"></i>
+                    <span className="text-gray-900">{product.name}</span>
+                </div>
+
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20">
                     {/* Gallery */}
                     <div className="space-y-6">

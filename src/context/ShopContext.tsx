@@ -18,6 +18,7 @@ interface ShopContextType extends ShopState {
     addProduct: (product: Product) => void;
     updateProduct: (product: Product) => void;
     deleteProduct: (id: string) => void;
+    clearCart: () => void;
 }
 
 const ShopContext = createContext<ShopContextType | undefined>(undefined);
@@ -158,11 +159,13 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
         setProducts(prev => prev.filter(p => p.id !== id));
     };
 
+    const clearCart = () => setCart([]);
+
     return (
         <ShopContext.Provider value={{
             products, cart, wishlist, orders, searchQuery, currentCategory, demoMode, settings, lastAddedItem,
             addToCart, removeFromCart, updateQty, toggleWishlist, setCategory, setSearchQuery, loading,
-            addProduct, updateProduct, deleteProduct
+            addProduct, updateProduct, deleteProduct, clearCart
         }}>
             {children}
         </ShopContext.Provider>

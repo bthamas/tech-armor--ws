@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 export default function CheckoutPage() {
-    const { cart, orders } = useShop(); // In real app: addOrder action
+    const { cart, orders, clearCart } = useShop(); // In real app: addOrder action
     const router = useRouter();
     const total = cart.reduce((s, i) => s + (i.price * i.qty), 0);
     const shipping = total >= 15000 ? 0 : 1490;
@@ -17,7 +17,7 @@ export default function CheckoutPage() {
     const handleOrder = (e: React.FormEvent) => {
         e.preventDefault();
         setStep(3);
-        // Clean cart in real app...
+        clearCart(); // Clear the cart
         setTimeout(() => {
             router.push('/');
         }, 5000);
