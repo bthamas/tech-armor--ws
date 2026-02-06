@@ -41,7 +41,14 @@ export default function ProductCard({ product }: { product: Product }) {
             </div>
             <Link href={`/products/${product.id}`}>
                 <div className="mb-4">
-                    <div className="text-[10px] font-black text-brand-500 uppercase tracking-widest mb-2">{product.category}</div>
+                    <div className="flex justify-between items-start mb-2">
+                        <div className="text-[10px] font-black text-brand-500 uppercase tracking-widest">{product.category}</div>
+                        {product.stock !== undefined && product.stock <= 5 && product.stock > 0 && (
+                            <span className="text-[9px] font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full whitespace-nowrap">
+                                <i className="fa-solid fa-clock text-[8px] mr-1"></i> {product.stock} db
+                            </span>
+                        )}
+                    </div>
                     <h3 className="font-bold text-gray-900 leading-tight group-hover:text-brand-500 transition-colors line-clamp-2 min-h-[2.5rem]">{product.name}</h3>
                 </div>
             </Link>

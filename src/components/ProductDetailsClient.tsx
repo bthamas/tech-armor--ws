@@ -5,9 +5,22 @@ import { useShop } from '@/context/ShopContext';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 
-export default function ProductDetailsClient({ product }: { product: Product }) {
-    const { addToCart } = useShop();
+export default function ProductDetailsClient({ product: initialProduct }: { product: Product }) {
+    const { addToCart, toggleWishlist, wishlist, products } = useShop();
+
+    // Live Update Logic: Try to find the product in Context (which has Admin updates)
+    // If not found (shouldn't happen if Context is initialized with mockData), fallback to initial server prop
+    const product = products.find(p => p.id === initialProduct.id) || initialProduct;
+
     const [selectedImage, setSelectedImage] = useState(product.images[0] || product.image);
+    const isLiked = wishlist.includes(product.id);
+
+    // Update selected image if product images change (e.g. from Admin update)
+    React.useEffect(() => {
+        if (product.images[0] || product.image) {
+            setSelectedImage(product.images[0] || product.image);
+        }
+    }, [product]);
 
     return (
         <div className="min-h-screen bg-white">
@@ -18,7 +31,7 @@ export default function ProductDetailsClient({ product }: { product: Product }) 
                     {/* Gallery */}
                     <div className="space-y-6">
                         <div className="rounded-[2.5rem] overflow-hidden bg-surface-50 border border-gray-100 aspect-square shadow-sm">
-                            <img src={selectedImage} alt={product.name} className="w-full h-full object-contain p-8" />
+                            <img src={selectedImage} alt={product.name} className="w-full h-full object-contain p-8 animate-fade-in" />
                         </div>
                         <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar">
                             {product.images && product.images.length > 0 ? (
@@ -26,7 +39,7 @@ export default function ProductDetailsClient({ product }: { product: Product }) 
                                     <div
                                         key={i}
                                         onClick={() => setSelectedImage(img)}
-                                        className={`thumb-gallery-item ${selectedImage === img ? 'active' : ''}`}
+                                        className={`thumb-gallery-item ${selectedImage === img ? 'active' : ''} cursor-pointer`}
                                     >
                                         <img src={img} className="w-full h-full object-cover rounded-lg" alt="" />
                                     </div>
@@ -42,7 +55,10 @@ export default function ProductDetailsClient({ product }: { product: Product }) 
                         <div className="flex items-center gap-4 mb-6">
                             <span className="text-xs font-black text-brand-500 uppercase tracking-widest">{product.category}</span>
                             {product.stock && product.stock > 0 ? (
-                                <span className="text-xs font-bold text-green-600 bg-green-50 px-3 py-1 rounded-full"><i className="fa-solid fa-check mr-1"></i> Raktáron</span>
+                                <span className={`text-xs font-bold px-3 py-1 rounded-full ${product.stock <= 5 ? 'bg-orange-100 text-orange-600' : 'bg-green-50 text-green-600'}`}>
+                                    <i className={`fa-solid ${product.stock <= 5 ? 'fa-triangle-exclamation' : 'fa-check'} mr-1`}></i>
+                                    {product.stock <= 5 ? `Csak ${product.stock} db raktáron!` : 'Raktáron'}
+                                </span>
                             ) : (
                                 <span className="text-xs font-bold text-red-500 bg-red-50 px-3 py-1 rounded-full">Nincs raktáron</span>
                             )}
@@ -70,8 +86,11 @@ export default function ProductDetailsClient({ product }: { product: Product }) 
                             >
                                 <i className="fa-solid fa-cart-plus"></i> Kosárba rakom
                             </button>
-                            <button className="btn-design-square">
-                                <i className="fa-regular fa-heart text-2xl"></i>
+                            <button
+                                onClick={() => toggleWishlist(product.id)}
+                                className={`btn-design-square transition-all ${isLiked ? 'bg-red-50 text-red-500 border-red-200' : 'hover:border-red-200 hover:text-red-500'}`}
+                            >
+                                <i className={`${isLiked ? 'fa-solid' : 'fa-regular'} fa-heart text-2xl`}></i>
                             </button>
                         </div>
 

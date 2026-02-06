@@ -34,10 +34,10 @@ export default function Navbar() {
 
                     {/* Actions */}
                     <div className="flex items-center gap-4">
-                        <button className="w-10 h-10 rounded-full hover:bg-surface-50 flex items-center justify-center text-gray-600 transition-all relative">
+                        <Link href="/wishlist" className="w-10 h-10 rounded-full hover:bg-surface-50 flex items-center justify-center text-gray-600 transition-all relative">
                             {wishlist.length > 0 && <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>}
                             <i className="fa-regular fa-heart text-lg"></i>
-                        </button>
+                        </Link>
                         <Link href="/cart" className="w-10 h-10 rounded-full hover:bg-surface-50 flex items-center justify-center text-gray-600 transition-all relative">
                             {cart.reduce((a, b) => a + b.qty, 0) > 0 && <span className="absolute top-0 right-0 w-5 h-5 bg-brand-500 rounded-full border-2 border-white text-[10px] text-white flex items-center justify-center font-bold">{cart.reduce((a, b) => a + b.qty, 0)}</span>}
                             <i className="fa-solid fa-bag-shopping text-lg"></i>

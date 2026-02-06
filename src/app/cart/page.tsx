@@ -83,9 +83,9 @@ export default function CartPage() {
                                 <div className="text-4xl lg:text-5xl font-black tracking-tight">{total.toLocaleString('hu-HU')} Ft</div>
                                 <div className="text-gray-400 text-xs mt-2 font-medium">A végösszeg tartalmazza az ÁFÁ-t.</div>
                             </div>
-                            <button className="w-full sm:w-auto bg-brand-500 text-white px-20 py-6 rounded-2xl font-black text-2xl active:scale-95 transition-all shadow-xl hover:bg-brand-600 relative z-10 flex items-center justify-center gap-4 cursor-pointer">
+                            <Link href="/checkout" className="w-full sm:w-auto bg-brand-500 text-white px-20 py-6 rounded-2xl font-black text-2xl active:scale-95 transition-all shadow-xl hover:bg-brand-600 relative z-10 flex items-center justify-center gap-4 cursor-pointer">
                                 Pénztár <i className="fa-solid fa-arrow-right text-sm"></i>
-                            </button>
+                            </Link>
                         </div>
                     </>
                 )}
